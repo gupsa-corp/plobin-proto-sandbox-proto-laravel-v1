@@ -73,6 +73,11 @@ class Livewire extends Component
         $this->editingProject = null;
     }
 
+    public function switchToGridView()
+    {
+        return redirect()->route('pms.projects');
+    }
+
     public function loadProjects()
     {
         $service = new Service();
