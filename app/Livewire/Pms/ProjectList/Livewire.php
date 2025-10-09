@@ -16,6 +16,19 @@ class Livewire extends Component
     public $priority = '';
     public $sortBy = 'created_at';
     public $sortDirection = 'desc';
+    public $viewMode = 'grid'; // grid 또는 table
+    public $showCreateModal = false;
+    public $showEditModal = false;
+    public $editingProjectId = null;
+    public $projectForm = [
+        'name' => '',
+        'description' => '',
+        'status' => 'planning',
+        'priority' => 'medium',
+        'start_date' => '',
+        'end_date' => '',
+        'progress' => 0
+    ];
 
     public function mount()
     {
@@ -46,6 +59,119 @@ class Livewire extends Component
             $this->sortDirection = 'asc';
         }
         $this->loadProjects();
+    }
+
+    public function openCreateModal()
+    {
+        $this->resetProjectForm();
+        $this->showCreateModal = true;
+    }
+
+    public function closeCreateModal()
+    {
+        $this->showCreateModal = false;
+        $this->resetProjectForm();
+    }
+
+    public function resetProjectForm()
+    {
+        $this->projectForm = [
+            'name' => '',
+            'description' => '',
+            'status' => 'planning',
+            'priority' => 'medium',
+            'start_date' => '',
+            'end_date' => '',
+            'progress' => 0
+        ];
+    }
+
+    public function createProject()
+    {
+        $this->validate([
+            'projectForm.name' => 'required|min:3',
+            'projectForm.description' => 'required|min:10',
+            'projectForm.start_date' => 'required|date',
+            'projectForm.end_date' => 'required|date|after:projectForm.start_date'
+        ], [
+            'projectForm.name.required' => '프로젝트명을 입력해주세요.',
+            'projectForm.name.min' => '프로젝트명은 3자 이상이어야 합니다.',
+            'projectForm.description.required' => '설명을 입력해주세요.',
+            'projectForm.description.min' => '설명은 10자 이상이어야 합니다.',
+            'projectForm.start_date.required' => '시작일을 선택해주세요.',
+            'projectForm.end_date.required' => '마감일을 선택해주세요.',
+            'projectForm.end_date.after' => '마감일은 시작일보다 늦어야 합니다.'
+        ]);
+
+        // TODO: 실제 데이터베이스에 저장
+        session()->flash('message', "\"{$this->projectForm['name']}\" 프로젝트가 성공적으로 생성되었습니다.");
+        $this->closeCreateModal();
+        $this->loadProjects();
+    }
+
+    public function viewProject($projectId)
+    {
+        // 프로젝트 상세 정보 조회
+        $project = collect($this->projects)->firstWhere('id', $projectId);
+        if ($project) {
+            session()->flash('message', "프로젝트 '{$project['name']}' 상세 정보: 진행률 {$project['progress']}%, 상태: {$this->getStatusText($project['status'])}");
+        }
+    }
+
+    private function getStatusText($status)
+    {
+        return match($status) {
+            'planning' => '계획중',
+            'in_progress' => '진행중',
+            'completed' => '완료',
+            'pending' => '대기중',
+            default => '알 수 없음'
+        };
+    }
+
+    public function editProject($projectId)
+    {
+        $project = collect($this->projects)->firstWhere('id', $projectId);
+        if ($project) {
+            $this->editingProjectId = $projectId;
+            $this->projectForm = [
+                'name' => $project['name'],
+                'description' => $project['description'],
+                'status' => $project['status'],
+                'priority' => $project['priority'],
+                'start_date' => $project['startDate'],
+                'end_date' => $project['endDate'],
+                'progress' => $project['progress']
+            ];
+            $this->showEditModal = true;
+        }
+    }
+
+    public function updateProject()
+    {
+        $this->validate([
+            'projectForm.name' => 'required|min:3',
+            'projectForm.description' => 'required|min:10',
+            'projectForm.start_date' => 'required|date',
+            'projectForm.end_date' => 'required|date|after:projectForm.start_date'
+        ]);
+
+        // TODO: 실제 데이터베이스 업데이트
+        session()->flash('message', "프로젝트 '{$this->projectForm['name']}'이 성공적으로 수정되었습니다.");
+        $this->closeEditModal();
+        $this->loadProjects();
+    }
+
+    public function closeEditModal()
+    {
+        $this->showEditModal = false;
+        $this->editingProjectId = null;
+        $this->resetProjectForm();
+    }
+
+    public function switchToTableView()
+    {
+        return redirect()->route('pms.table-view');
     }
 
     public function loadProjects()

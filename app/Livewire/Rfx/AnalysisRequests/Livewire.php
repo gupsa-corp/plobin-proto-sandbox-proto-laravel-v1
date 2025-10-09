@@ -3,7 +3,12 @@
 namespace App\Livewire\Rfx\AnalysisRequests;
 
 use Livewire\Component;
-use App\Services\Rfx\AnalysisRequests\Service;
+use App\Services\Rfx\AnalysisRequests\List\Service as ListService;
+use App\Services\Rfx\AnalysisRequests\Create\Service as CreateService;
+use App\Services\Rfx\AnalysisRequests\UpdateStatus\Service as UpdateStatusService;
+use App\Services\Rfx\AnalysisRequests\UpdatePriority\Service as UpdatePriorityService;
+use App\Services\Rfx\AnalysisRequests\Assign\Service as AssignService;
+use App\Services\Rfx\AnalysisRequests\Delete\Service as DeleteService;
 
 class Livewire extends Component
 {
@@ -60,8 +65,8 @@ class Livewire extends Component
 
     public function createRequest()
     {
-        $service = new Service();
-        $result = $service->createRequest($this->newRequest);
+        $service = new CreateService();
+        $result = $service->execute($this->newRequest);
         
         if ($result['success']) {
             session()->flash('message', '분석 요청이 생성되었습니다.');
@@ -77,8 +82,8 @@ class Livewire extends Component
 
     public function updateRequestStatus($requestId, $status)
     {
-        $service = new Service();
-        $result = $service->updateStatus($requestId, $status);
+        $service = new UpdateStatusService();
+        $result = $service->execute($requestId, $status);
         
         if ($result['success']) {
             session()->flash('message', '요청 상태가 업데이트되었습니다.');
@@ -88,8 +93,8 @@ class Livewire extends Component
 
     public function updateRequestPriority($requestId, $priority)
     {
-        $service = new Service();
-        $result = $service->updatePriority($requestId, $priority);
+        $service = new UpdatePriorityService();
+        $result = $service->execute($requestId, $priority);
         
         if ($result['success']) {
             session()->flash('message', '요청 우선순위가 업데이트되었습니다.');
@@ -99,8 +104,8 @@ class Livewire extends Component
 
     public function assignRequest($requestId, $assignee)
     {
-        $service = new Service();
-        $result = $service->assignRequest($requestId, $assignee);
+        $service = new AssignService();
+        $result = $service->execute($requestId, $assignee);
         
         if ($result['success']) {
             session()->flash('message', '요청이 담당자에게 배정되었습니다.');
@@ -110,8 +115,8 @@ class Livewire extends Component
 
     public function deleteRequest($requestId)
     {
-        $service = new Service();
-        $result = $service->deleteRequest($requestId);
+        $service = new DeleteService();
+        $result = $service->execute($requestId);
         
         if ($result['success']) {
             session()->flash('message', '요청이 삭제되었습니다.');
@@ -122,7 +127,7 @@ class Livewire extends Component
 
     public function loadRequests()
     {
-        $service = new Service();
+        $service = new ListService();
         $this->requests = $service->execute([
             'status' => $this->statusFilter,
             'priority' => $this->priorityFilter,

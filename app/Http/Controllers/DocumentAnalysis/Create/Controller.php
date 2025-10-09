@@ -4,6 +4,7 @@ namespace App\Http\Controllers\DocumentAnalysis\Create;
 
 use App\Http\Controllers\Controller as BaseController;
 use App\Services\DocumentAnalysis\Create\Service;
+use App\Http\Controllers\DocumentAnalysis\Create\Response;
 use Illuminate\Http\Request;
 
 /**
@@ -34,11 +35,11 @@ use Illuminate\Http\Request;
  */
 class Controller extends BaseController
 {
-    public function __invoke(Request $request, $id)
+    public function __invoke(Request $request)
     {
         try {
             $service = new Service();
-            $result = $service->execute(['file_id' => $id]);
+            $result = $service->execute($request->all());
 
             return new Response($result);
             

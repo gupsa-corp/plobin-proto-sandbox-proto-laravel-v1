@@ -4,7 +4,8 @@ namespace App\Livewire\Rfx\FileUpload;
 
 use Livewire\Component;
 use Livewire\WithFileUploads;
-use App\Services\Rfx\FileUpload\Service;
+use App\Services\Rfx\FileUpload\Upload\Service;
+use App\Services\Rfx\FileUpload\GetRecentUploads\Service as GetRecentUploadsService;
 
 class Livewire extends Component
 {
@@ -35,7 +36,7 @@ class Livewire extends Component
             $this->uploadProgress[$index] = 0;
             
             // 파일 업로드 처리
-            $result = $service->uploadFile($file);
+            $result = $service->execute(['file' => $file]);
             
             if ($result['success']) {
                 $this->uploadProgress[$index] = 100;
@@ -79,8 +80,9 @@ class Livewire extends Component
 
     public function loadRecentUploads()
     {
-        $service = new Service();
-        $this->recentUploads = $service->getRecentUploads();
+        $service = new GetRecentUploadsService();
+        $result = $service->execute([]);
+        $this->recentUploads = (isset($result['success']) && $result['success']) ? $result['data'] : [];
     }
 
     public function render()

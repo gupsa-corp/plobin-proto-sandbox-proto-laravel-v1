@@ -170,7 +170,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 document.getElementById(`bar-${index}`).classList.add('bg-red-500');
             });
             
-            xhr.open('POST', '{{ route("api.file-upload.create") }}');
+            xhr.open('POST', '/api/rfx/file-upload');
             xhr.send(formData);
         });
     }

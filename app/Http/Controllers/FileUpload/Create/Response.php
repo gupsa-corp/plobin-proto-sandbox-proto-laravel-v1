@@ -10,7 +10,7 @@ class Response extends JsonResponse
     {
         $response = [
             'success' => true,
-            'message' => '파일이 성공적으로 업로드되었습니다',
+            'message' => '파일이 성공적으로 업로드되었습니다.',
             'data' => $data
         ];
 

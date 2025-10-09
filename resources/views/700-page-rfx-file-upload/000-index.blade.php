@@ -8,7 +8,7 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
                     </svg>
                 </button>
-                <h1 class="text-3xl font-bold text-gray-900">파일 업로드</h1>
+                <h1 class="text-3xl font-bold text-gray-900">RFX 파일 업로드</h1>
             </div>
             <p class="text-gray-600">문서를 업로드하여 AI 분석을 시작하세요</p>
         </div>

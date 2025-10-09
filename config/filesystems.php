@@ -47,6 +47,22 @@ return [
             'report' => false,
         ],
 
+        'plobin_uploads' => [
+            'driver' => 'local',
+            'root' => storage_path('app/plobin/uploads'),
+            'visibility' => 'private',
+            'throw' => false,
+            'report' => false,
+        ],
+
+        'plobin_downloads' => [
+            'driver' => 'local',
+            'root' => storage_path('app/plobin/downloads'),
+            'visibility' => 'private',
+            'throw' => false,
+            'report' => false,
+        ],
+
         's3' => [
             'driver' => 's3',
             'key' => env('AWS_ACCESS_KEY_ID'),

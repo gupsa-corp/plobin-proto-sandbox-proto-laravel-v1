@@ -3,7 +3,13 @@
 namespace App\Livewire\Rfx\FormExecution;
 
 use Livewire\Component;
-use App\Services\Rfx\FormExecution\Service;
+use App\Services\Rfx\FormExecution\ListExecutions\Service as ListExecutionsService;
+use App\Services\Rfx\FormExecution\GetForms\Service as GetFormsService;
+use App\Services\Rfx\FormExecution\GetFormFields\Service as GetFormFieldsService;
+use App\Services\Rfx\FormExecution\ExecuteForm\Service as ExecuteFormService;
+use App\Services\Rfx\FormExecution\RetryExecution\Service as RetryExecutionService;
+use App\Services\Rfx\FormExecution\CancelExecution\Service as CancelExecutionService;
+use App\Services\Rfx\FormExecution\DownloadResult\Service as DownloadResultService;
 
 class Livewire extends Component
 {
@@ -34,9 +40,9 @@ class Livewire extends Component
 
     public function selectForm($formId)
     {
-        $service = new Service();
+        $service = new GetFormFieldsService();
         $this->selectedForm = collect($this->forms)->firstWhere('id', $formId);
-        $this->formData = $service->getFormFields($formId);
+        $this->formData = $service->execute($formId);
     }
 
     public function openExecuteModal()
@@ -57,8 +63,8 @@ class Livewire extends Component
 
     public function executeForm()
     {
-        $service = new Service();
-        $result = $service->executeForm($this->selectedForm['id'], $this->formData);
+        $service = new ExecuteFormService();
+        $result = $service->execute($this->selectedForm['id'], $this->formData);
         
         if ($result['success']) {
             session()->flash('message', '폼이 성공적으로 실행되었습니다.');
@@ -74,8 +80,8 @@ class Livewire extends Component
 
     public function retryExecution($executionId)
     {
-        $service = new Service();
-        $result = $service->retryExecution($executionId);
+        $service = new RetryExecutionService();
+        $result = $service->execute($executionId);
         
         if ($result['success']) {
             session()->flash('message', '폼 실행을 재시작했습니다.');
@@ -85,8 +91,8 @@ class Livewire extends Component
 
     public function cancelExecution($executionId)
     {
-        $service = new Service();
-        $result = $service->cancelExecution($executionId);
+        $service = new CancelExecutionService();
+        $result = $service->execute($executionId);
         
         if ($result['success']) {
             session()->flash('message', '폼 실행이 취소되었습니다.');
@@ -96,8 +102,8 @@ class Livewire extends Component
 
     public function downloadResult($executionId)
     {
-        $service = new Service();
-        $result = $service->downloadResult($executionId);
+        $service = new DownloadResultService();
+        $result = $service->execute($executionId);
         
         if ($result['success']) {
             session()->flash('message', '결과 파일을 다운로드했습니다.');
@@ -108,8 +114,8 @@ class Livewire extends Component
     {
         $this->formData = [];
         if ($this->selectedForm) {
-            $service = new Service();
-            $fields = $service->getFormFields($this->selectedForm['id']);
+            $service = new GetFormFieldsService();
+            $fields = $service->execute($this->selectedForm['id']);
             foreach ($fields as $field) {
                 $this->formData[$field['name']] = $field['defaultValue'] ?? '';
             }
@@ -118,15 +124,15 @@ class Livewire extends Component
 
     public function loadForms()
     {
-        $service = new Service();
-        $this->forms = $service->getForms([
+        $service = new GetFormsService();
+        $this->forms = $service->execute([
             'type' => $this->typeFilter
         ]);
     }
 
     public function loadExecutions()
     {
-        $service = new Service();
+        $service = new ListExecutionsService();
         $this->executions = $service->execute([
             'status' => $this->statusFilter
         ]);
