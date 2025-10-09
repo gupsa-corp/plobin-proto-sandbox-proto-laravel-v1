@@ -1,0 +1,444 @@
+<?php
+
+use Illuminate\Support\Facades\Route;
+use Illuminate\Http\Request;
+
+// API 문서 다운로드 (YAML)
+Route::get('api-docs/download/yaml', function (Request $request) {
+    try {
+        $yamlContent = "openapi: 3.0.3
+info:
+  title: Gupsa PMS API Documentation
+  description: 프로젝트 관리 시스템 API 문서 - 실제 작동하는 엔드포인트만 포함
+  version: 1.0.0
+  contact:
+    name: Gupsa Development Team
+    email: dev@gupsa.com
+servers:
+  - url: /api/sandbox/gupsa/pms
+    description: Gupsa PMS 샌드박스 API 서버
+paths:
+  /current-user-permissions:
+    get:
+      summary: 현재 사용자 권한 조회
+      description: 현재 프로젝트에서의 사용자 권한과 역할을 조회합니다.
+      tags:
+        - User Permissions
+      parameters:
+        - name: project_id
+          in: query
+          required: false
+          description: 프로젝트 ID (선택사항, 미제공시 URL에서 추출)
+          schema:
+            type: integer
+            example: 1
+      responses:
+        '200':
+          description: 권한 정보 조회 성공
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                        example: 1
+                      name:
+                        type: string
+                        example: 관리자 테스트
+                      email:
+                        type: string
+                        example: admin@example.com
+                  current_project:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                        example: 1
+                      name:
+                        type: string
+                        example: 테스트 프로젝트
+                  current_permissions:
+                    type: object
+                    properties:
+                      roles:
+                        type: array
+                        items:
+                          type: string
+                        example: [\"project-owner\"]
+                      abilities:
+                        type: array
+                        items:
+                          type: string
+                        example: [\"own-project\", \"manage-project\", \"manage-project-settings\"]
+                      can_edit:
+                        type: boolean
+                        example: true
+                      can_delete:
+                        type: boolean
+                        example: true
+                      can_manage_members:
+                        type: boolean
+                        example: true
+                  generated_at:
+                    type: string
+                    format: date-time
+                    example: 2025-09-17T18:20:55Z
+        '401':
+          description: 인증되지 않은 사용자
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: 인증이 필요합니다
+        '404':
+          description: 프로젝트를 찾을 수 없음
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: 프로젝트를 찾을 수 없습니다
+        '500':
+          description: 서버 오류
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: 서버 내부 오류가 발생했습니다
+components:
+  securitySchemes:
+    sessionAuth:
+      type: apiKey
+      in: cookie
+      name: laravel_session
+      description: Laravel 세션 기반 인증
+security:
+  - sessionAuth: []
+tags:
+  - name: User Permissions
+    description: 사용자 권한 관련 API";
+
+        return response($yamlContent)
+            ->header('Content-Type', 'application/x-yaml')
+            ->header('Content-Disposition', 'attachment; filename="gupsa-pms-api-docs.yaml"');
+            
+    } catch (\Exception $e) {
+        return response()->json([
+            'error' => 'API YAML 다운로드 중 오류가 발생했습니다: ' . $e->getMessage()
+        ], 500);
+    }
+});
+
+// API 문서 다운로드 (JSON)
+Route::get('api-docs/download/json', function (Request $request) {
+    try {
+        $apiDocs = [
+            'openapi' => '3.0.3',
+            'info' => [
+                'title' => 'Gupsa PMS API Documentation',
+                'description' => '프로젝트 관리 시스템 API 문서 - 실제 작동하는 엔드포인트만 포함',
+                'version' => '1.0.0',
+                'contact' => [
+                    'name' => 'Gupsa Development Team',
+                    'email' => 'dev@gupsa.com'
+                ]
+            ],
+            'servers' => [
+                [
+                    'url' => '/api/sandbox/gupsa/pms',
+                    'description' => 'Gupsa PMS 샌드박스 API 서버'
+                ]
+            ],
+            'paths' => [
+                '/current-user-permissions' => [
+                    'get' => [
+                        'summary' => '현재 사용자 권한 조회',
+                        'description' => '현재 프로젝트에서의 사용자 권한과 역할을 조회합니다.',
+                        'tags' => ['User Permissions'],
+                        'parameters' => [
+                            [
+                                'name' => 'project_id',
+                                'in' => 'query',
+                                'required' => false,
+                                'description' => '프로젝트 ID (선택사항, 미제공시 URL에서 추출)',
+                                'schema' => [
+                                    'type' => 'integer',
+                                    'example' => 1
+                                ]
+                            ]
+                        ],
+                        'responses' => [
+                            '200' => [
+                                'description' => '권한 정보 조회 성공',
+                                'content' => [
+                                    'application/json' => [
+                                        'schema' => [
+                                            'type' => 'object',
+                                            'properties' => [
+                                                'user' => [
+                                                    'type' => 'object',
+                                                    'properties' => [
+                                                        'id' => ['type' => 'integer', 'example' => 1],
+                                                        'name' => ['type' => 'string', 'example' => '관리자 테스트'],
+                                                        'email' => ['type' => 'string', 'example' => 'admin@example.com']
+                                                    ]
+                                                ],
+                                                'current_project' => [
+                                                    'type' => 'object',
+                                                    'properties' => [
+                                                        'id' => ['type' => 'integer', 'example' => 1],
+                                                        'name' => ['type' => 'string', 'example' => '테스트 프로젝트']
+                                                    ]
+                                                ],
+                                                'current_permissions' => [
+                                                    'type' => 'object',
+                                                    'properties' => [
+                                                        'roles' => ['type' => 'array', 'items' => ['type' => 'string'], 'example' => ['project-owner']],
+                                                        'abilities' => ['type' => 'array', 'items' => ['type' => 'string'], 'example' => ['own-project', 'manage-project', 'manage-project-settings']],
+                                                        'can_edit' => ['type' => 'boolean', 'example' => true],
+                                                        'can_delete' => ['type' => 'boolean', 'example' => true],
+                                                        'can_manage_members' => ['type' => 'boolean', 'example' => true]
+                                                    ]
+                                                ],
+                                                'generated_at' => ['type' => 'string', 'format' => 'date-time', 'example' => '2025-09-17T18:20:55Z']
+                                            ]
+                                        ]
+                                    ]
+                                ]
+                            ],
+                            '401' => [
+                                'description' => '인증되지 않은 사용자',
+                                'content' => [
+                                    'application/json' => [
+                                        'schema' => [
+                                            'type' => 'object',
+                                            'properties' => [
+                                                'error' => ['type' => 'string', 'example' => '인증이 필요합니다']
+                                            ]
+                                        ]
+                                    ]
+                                ]
+                            ],
+                            '404' => [
+                                'description' => '프로젝트를 찾을 수 없음',
+                                'content' => [
+                                    'application/json' => [
+                                        'schema' => [
+                                            'type' => 'object',
+                                            'properties' => [
+                                                'error' => ['type' => 'string', 'example' => '프로젝트를 찾을 수 없습니다']
+                                            ]
+                                        ]
+                                    ]
+                                ]
+                            ],
+                            '500' => [
+                                'description' => '서버 오류',
+                                'content' => [
+                                    'application/json' => [
+                                        'schema' => [
+                                            'type' => 'object',
+                                            'properties' => [
+                                                'error' => ['type' => 'string', 'example' => '서버 내부 오류가 발생했습니다']
+                                            ]
+                                        ]
+                                    ]
+                                ]
+                            ]
+                        ]
+                    ]
+                ]
+            ],
+            'components' => [
+                'securitySchemes' => [
+                    'sessionAuth' => [
+                        'type' => 'apiKey',
+                        'in' => 'cookie',
+                        'name' => 'laravel_session',
+                        'description' => 'Laravel 세션 기반 인증'
+                    ]
+                ]
+            ],
+            'security' => [
+                ['sessionAuth' => []]
+            ],
+            'tags' => [
+                [
+                    'name' => 'User Permissions',
+                    'description' => '사용자 권한 관련 API'
+                ]
+            ]
+        ];
+        
+        return response()->json($apiDocs)
+            ->header('Content-Disposition', 'attachment; filename="gupsa-pms-api-docs.json"');
+            
+    } catch (\Exception $e) {
+        return response()->json([
+            'error' => 'API JSON 다운로드 중 오류가 발생했습니다: ' . $e->getMessage()
+        ], 500);
+    }
+});
+
+// API 문서 조회
+Route::get('api-docs', function (Request $request) {
+    try {
+        // YAML 대신 직접 JSON으로 API 문서 반환
+        $apiDocs = [
+            'openapi' => '3.0.3',
+            'info' => [
+                'title' => 'Gupsa PMS API Documentation',
+                'description' => '프로젝트 관리 시스템 API 문서 - 실제 작동하는 엔드포인트만 포함',
+                'version' => '1.0.0',
+                'contact' => [
+                    'name' => 'Gupsa Development Team',
+                    'email' => 'dev@gupsa.com'
+                ]
+            ],
+            'servers' => [
+                [
+                    'url' => '/api/sandbox/gupsa/pms',
+                    'description' => 'Gupsa PMS 샌드박스 API 서버'
+                ]
+            ],
+            'paths' => [
+                '/current-user-permissions' => [
+                    'get' => [
+                        'summary' => '현재 사용자 권한 조회',
+                        'description' => '현재 프로젝트에서의 사용자 권한과 역할을 조회합니다.',
+                        'tags' => ['User Permissions'],
+                        'parameters' => [
+                            [
+                                'name' => 'project_id',
+                                'in' => 'query',
+                                'required' => false,
+                                'description' => '프로젝트 ID (선택사항, 미제공시 URL에서 추출)',
+                                'schema' => [
+                                    'type' => 'integer',
+                                    'example' => 1
+                                ]
+                            ]
+                        ],
+                        'responses' => [
+                            '200' => [
+                                'description' => '권한 정보 조회 성공',
+                                'content' => [
+                                    'application/json' => [
+                                        'schema' => [
+                                            'type' => 'object',
+                                            'properties' => [
+                                                'user' => [
+                                                    'type' => 'object',
+                                                    'properties' => [
+                                                        'id' => ['type' => 'integer', 'example' => 1],
+                                                        'name' => ['type' => 'string', 'example' => '관리자 테스트'],
+                                                        'email' => ['type' => 'string', 'example' => 'admin@example.com']
+                                                    ]
+                                                ],
+                                                'current_project' => [
+                                                    'type' => 'object',
+                                                    'properties' => [
+                                                        'id' => ['type' => 'integer', 'example' => 1],
+                                                        'name' => ['type' => 'string', 'example' => '테스트 프로젝트']
+                                                    ]
+                                                ],
+                                                'current_permissions' => [
+                                                    'type' => 'object',
+                                                    'properties' => [
+                                                        'roles' => ['type' => 'array', 'items' => ['type' => 'string'], 'example' => ['project-owner']],
+                                                        'abilities' => ['type' => 'array', 'items' => ['type' => 'string'], 'example' => ['own-project', 'manage-project', 'manage-project-settings']],
+                                                        'can_edit' => ['type' => 'boolean', 'example' => true],
+                                                        'can_delete' => ['type' => 'boolean', 'example' => true],
+                                                        'can_manage_members' => ['type' => 'boolean', 'example' => true]
+                                                    ]
+                                                ],
+                                                'generated_at' => ['type' => 'string', 'format' => 'date-time', 'example' => '2025-09-17T18:20:55Z']
+                                            ]
+                                        ]
+                                    ]
+                                ]
+                            ],
+                            '401' => [
+                                'description' => '인증되지 않은 사용자',
+                                'content' => [
+                                    'application/json' => [
+                                        'schema' => [
+                                            'type' => 'object',
+                                            'properties' => [
+                                                'error' => ['type' => 'string', 'example' => '인증이 필요합니다']
+                                            ]
+                                        ]
+                                    ]
+                                ]
+                            ],
+                            '404' => [
+                                'description' => '프로젝트를 찾을 수 없음',
+                                'content' => [
+                                    'application/json' => [
+                                        'schema' => [
+                                            'type' => 'object',
+                                            'properties' => [
+                                                'error' => ['type' => 'string', 'example' => '프로젝트를 찾을 수 없습니다']
+                                            ]
+                                        ]
+                                    ]
+                                ]
+                            ],
+                            '500' => [
+                                'description' => '서버 오류',
+                                'content' => [
+                                    'application/json' => [
+                                        'schema' => [
+                                            'type' => 'object',
+                                            'properties' => [
+                                                'error' => ['type' => 'string', 'example' => '서버 내부 오류가 발생했습니다']
+                                            ]
+                                        ]
+                                    ]
+                                ]
+                            ]
+                        ]
+                    ]
+                ]
+            ],
+            'components' => [
+                'securitySchemes' => [
+                    'sessionAuth' => [
+                        'type' => 'apiKey',
+                        'in' => 'cookie',
+                        'name' => 'laravel_session',
+                        'description' => 'Laravel 세션 기반 인증'
+                    ]
+                ]
+            ],
+            'security' => [
+                ['sessionAuth' => []]
+            ],
+            'tags' => [
+                [
+                    'name' => 'User Permissions',
+                    'description' => '사용자 권한 관련 API'
+                ]
+            ]
+        ];
+        
+        return response()->json($apiDocs);
+        
+    } catch (\Exception $e) {
+        return response()->json([
+            'error' => 'API 문서 조회 중 오류가 발생했습니다: ' . $e->getMessage()
+        ], 500);
+    }
+});
