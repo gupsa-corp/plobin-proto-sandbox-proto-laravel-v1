@@ -1,4 +1,4 @@
-# azit Proto 개발 가이드
+# Plobin Proto 개발 가이드
 
 계정 : admin@example.com
 비번 : password
@@ -332,18 +332,18 @@ use RefreshDatabase, WithFaker;  // 필수 트레이트
 - **깔끔한 히스토리 유지**: 개발 단계에서는 마이그레이션 히스토리를 깔끔하게 유지하기 위해 기존 파일 수정을 선호
 
 ### 테이블 네이밍
-- 복수형 사용: `azit_document_summary_records`
+- 복수형 사용: `Plobin_document_summary_records`
 - 스네이크 케이스 사용
-- 접두사 활용: `azit_` 접두사로 프로젝트 구분
+- 접두사 활용: `Plobin_` 접두사로 프로젝트 구분
 
 ### 시더 파일 구조 규칙
 **파일명**: `{도메인}Seeder.php` 형식 사용
 
 **올바른 예시**
 ```
-database/seeders/AzitStoreSeeder.php
-database/seeders/AzitProductCategorySeeder.php
-database/seeders/AzitProductSeeder.php
+database/seeders/PlobinStoreSeeder.php
+database/seeders/PlobinProductCategorySeeder.php
+database/seeders/PlobinProductSeeder.php
 ```
 
 **클래스명**: 파일명과 동일하게 `{도메인}Seeder`
