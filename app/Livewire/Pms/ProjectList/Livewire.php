@@ -5,6 +5,8 @@ namespace App\Livewire\Pms\ProjectList;
 use Livewire\Component;
 use Livewire\WithPagination;
 use App\Services\Pms\Projects\Service;
+use App\Services\Pms\ProjectCreate\Service as ProjectCreateService;
+use App\Services\Pms\ProjectUpdate\Service as ProjectUpdateService;
 
 class Livewire extends Component
 {
@@ -29,6 +31,7 @@ class Livewire extends Component
         'end_date' => '',
         'progress' => 0
     ];
+    public $successMessage = '';
 
     public function mount()
     {
@@ -63,8 +66,10 @@ class Livewire extends Component
 
     public function openCreateModal()
     {
+        \Log::info('openCreateModal called');
         $this->resetProjectForm();
         $this->showCreateModal = true;
+        $this->successMessage = 'Create modal opened!';
     }
 
     public function closeCreateModal()
@@ -103,10 +108,17 @@ class Livewire extends Component
             'projectForm.end_date.after' => '마감일은 시작일보다 늦어야 합니다.'
         ]);
 
-        // TODO: 실제 데이터베이스에 저장
-        session()->flash('message', "\"{$this->projectForm['name']}\" 프로젝트가 성공적으로 생성되었습니다.");
-        $this->closeCreateModal();
-        $this->loadProjects();
+        $service = new ProjectCreateService();
+        $result = $service->execute($this->projectForm);
+        
+        if ($result['success']) {
+            $this->successMessage = $result['message'];
+            session()->flash('message', $this->successMessage);
+            $this->closeCreateModal();
+            $this->loadProjects();
+        } else {
+            $this->addError('projectForm', $result['message']);
+        }
     }
 
     public function viewProject($projectId)
@@ -114,7 +126,8 @@ class Livewire extends Component
         // 프로젝트 상세 정보 조회
         $project = collect($this->projects)->firstWhere('id', $projectId);
         if ($project) {
-            session()->flash('message', "프로젝트 '{$project['name']}' 상세 정보: 진행률 {$project['progress']}%, 상태: {$this->getStatusText($project['status'])}");
+            $this->successMessage = "프로젝트 '{$project['name']}' 상세 정보: 진행률 {$project['progress']}%, 상태: {$this->getStatusText($project['status'])}";
+            session()->flash('message', $this->successMessage);
         }
     }
 
@@ -156,10 +169,17 @@ class Livewire extends Component
             'projectForm.end_date' => 'required|date|after:projectForm.start_date'
         ]);
 
-        // TODO: 실제 데이터베이스 업데이트
-        session()->flash('message', "프로젝트 '{$this->projectForm['name']}'이 성공적으로 수정되었습니다.");
-        $this->closeEditModal();
-        $this->loadProjects();
+        $service = new ProjectUpdateService();
+        $result = $service->execute($this->editingProjectId, $this->projectForm);
+        
+        if ($result['success']) {
+            $this->successMessage = $result['message'];
+            session()->flash('message', $this->successMessage);
+            $this->closeEditModal();
+            $this->loadProjects();
+        } else {
+            $this->addError('projectForm', $result['message']);
+        }
     }
 
     public function closeEditModal()
@@ -189,6 +209,7 @@ class Livewire extends Component
 
     public function render()
     {
-        return view('700-page-pms-project-list/000-index');
+        return view('700-page-pms-project-list/000-index')
+            ->layout('layouts.app');
     }
 }

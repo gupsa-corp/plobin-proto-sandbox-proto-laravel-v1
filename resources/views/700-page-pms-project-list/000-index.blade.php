@@ -157,10 +157,7 @@
 
                     <!-- Actions -->
                     <div class="flex space-x-2">
-                        <button wire:click="viewProject({{ $project['id'] }})" class="flex-1 bg-blue-600 text-white px-3 py-2 rounded-md text-sm hover:bg-blue-700 transition-colors">
-                            상세보기
-                        </button>
-                        <button wire:click="editProject({{ $project['id'] }})" class="px-3 py-2 border border-gray-300 rounded-md text-sm hover:bg-gray-50 transition-colors">
+                        <button wire:click="editProject({{ $project['id'] }})" class="w-full bg-blue-600 text-white px-3 py-2 rounded-md text-sm hover:bg-blue-700 transition-colors">
                             편집
                         </button>
                     </div>
@@ -362,4 +359,24 @@
         </div>
         @endif
     </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('PMS Project List page loaded');
+            
+            // Livewire 이벤트 리스너 추가
+            document.addEventListener('livewire:load', function () {
+                console.log('Livewire loaded successfully');
+            });
+            
+            // 버튼 클릭 테스트
+            const createButton = document.querySelector('[wire\\:click="openCreateModal"]');
+            if (createButton) {
+                console.log('Create button found:', createButton);
+                createButton.addEventListener('click', function() {
+                    console.log('Create button clicked!');
+                });
+            }
+        });
+    </script>
 </div>

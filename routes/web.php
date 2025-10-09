@@ -18,6 +18,29 @@ Route::get('/pms/api-docs', \App\Livewire\Pms\ApiDocumentation\Livewire::class)-
 Route::get('/pms/bookmarks', \App\Livewire\Pms\BookmarkManager\Livewire::class)->name('pms.bookmarks');
 Route::get('/pms/ticket/{ticketId?}', \App\Livewire\Pms\TicketDetail\Livewire::class)->name('pms.ticket');
 
+// PMS Test Route - 실제 작동 확인용
+Route::get('/pms/test', function() {
+    return view('pms-test');
+});
+
+// PMS 수정 완료 확인 페이지
+Route::get('/pms/test-success', function() {
+    return view('pms-test-success');
+});
+
+// PMS 디버그 페이지
+Route::get('/pms/debug', function() {
+    return view('pms-debug');
+});
+
+// 간단한 Livewire 테스트
+Route::get('/simple-test', \App\Livewire\SimpleTest::class);
+
+// PMS 최종 현황 확인
+Route::get('/pms/final-test', function() {
+    return view('pms-final-test');
+});
+
 // RFX System Routes
 Route::get('/rfx/upload', \App\Livewire\Rfx\FileUpload\Livewire::class)->name('rfx.upload');
 Route::get('/rfx/files', \App\Livewire\Rfx\FileList\Livewire::class)->name('rfx.files');
@@ -57,4 +80,3 @@ Route::post('/api/document-analysis/create', \App\Http\Controllers\DocumentAnaly
 Route::get('/api/test', function () {
     return response()->json(['message' => 'API test works']);
 });
-
