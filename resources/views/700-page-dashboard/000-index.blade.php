@@ -26,7 +26,7 @@
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
-                
+
                 <!-- 대시보드 -->
                 <a href="/pms/dashboard" class="block bg-white rounded-lg border border-gray-200 p-4 hover:shadow-md hover:border-blue-300 transition-all">
                     <div class="flex items-center">
@@ -192,7 +192,7 @@
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
-                
+
                 <!-- RFX 대시보드 -->
                 <a href="/rfx/dashboard" class="block bg-white rounded-lg border border-gray-200 p-4 hover:shadow-md hover:border-purple-300 transition-all">
                     <div class="flex items-center">
@@ -283,32 +283,6 @@
                     </div>
                 </a>
 
-            </div>
-        </div>
-
-        <!-- 시스템 현황 -->
-        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-            <h2 class="text-lg font-semibold text-gray-900 mb-4">시스템 현황</h2>
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
-                <!-- PMS 현황 -->
-                <div class="text-center">
-                    <div class="text-2xl font-bold text-blue-600 mb-1">42</div>
-                    <div class="text-sm text-gray-600">PMS 프로젝트</div>
-                </div>
-                <div class="text-center">
-                    <div class="text-2xl font-bold text-green-600 mb-1">18</div>
-                    <div class="text-sm text-gray-600">진행중</div>
-                </div>
-                
-                <!-- RFX 현황 -->
-                <div class="text-center">
-                    <div class="text-2xl font-bold text-purple-600 mb-1">156</div>
-                    <div class="text-sm text-gray-600">RFX 파일</div>
-                </div>
-                <div class="text-center">
-                    <div class="text-2xl font-bold text-orange-600 mb-1">89</div>
-                    <div class="text-sm text-gray-600">분석 완료</div>
-                </div>
             </div>
         </div>
     </div>
