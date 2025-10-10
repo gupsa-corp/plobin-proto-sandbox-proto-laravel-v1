@@ -6,18 +6,6 @@ Route::get('/', function () {
     return view('700-page-dashboard/000-index');
 })->name('dashboard');
 
-// PMS System Routes
-Route::get('/pms/dashboard', \App\Livewire\Pms\Dashboard\Livewire::class)->name('pms.dashboard');
-Route::get('/pms/projects', \App\Livewire\Pms\ProjectList\Livewire::class)->name('pms.projects');
-Route::get('/pms/table-view', \App\Livewire\Pms\TableView\Livewire::class)->name('pms.table-view');
-Route::get('/pms/kanban', \App\Livewire\Pms\KanbanBoard\Livewire::class)->name('pms.kanban');
-Route::get('/pms/gantt', \App\Livewire\Pms\GanttChart\Livewire::class)->name('pms.gantt');
-Route::get('/pms/calendar', \App\Livewire\Pms\CalendarView\Livewire::class)->name('pms.calendar');
-Route::get('/pms/permissions', \App\Livewire\Pms\UserPermissions\Livewire::class)->name('pms.permissions');
-Route::get('/pms/api-docs', \App\Livewire\Pms\ApiDocumentation\Livewire::class)->name('pms.api-docs');
-Route::get('/pms/bookmarks', \App\Livewire\Pms\BookmarkManager\Livewire::class)->name('pms.bookmarks');
-Route::get('/pms/ticket/{ticketId?}', \App\Livewire\Pms\TicketDetail\Livewire::class)->name('pms.ticket');
-
 // PMS Test Route - 실제 작동 확인용
 Route::get('/pms/test', function() {
     return view('pms-test');
@@ -33,9 +21,6 @@ Route::get('/pms/debug', function() {
     return view('pms-debug');
 });
 
-// 간단한 Livewire 테스트
-Route::get('/simple-test', \App\Livewire\SimpleTest::class);
-
 // PMS 최종 현황 확인
 Route::get('/pms/final-test', function() {
     return view('pms-final-test');
@@ -46,13 +31,19 @@ Route::get('/pms/calendar-test', function() {
     return view('calendar-test');
 });
 
-// RFX System Routes
-Route::get('/rfx/upload', \App\Livewire\Rfx\FileUpload\Livewire::class)->name('rfx.upload');
-Route::get('/rfx/files', \App\Livewire\Rfx\FileList\Livewire::class)->name('rfx.files');
-Route::get('/rfx/analysis', \App\Livewire\Rfx\DocumentAnalysis\Livewire::class)->name('rfx.analysis');
-Route::get('/rfx/requests', \App\Livewire\Rfx\AnalysisRequests\Livewire::class)->name('rfx.requests');
-Route::get('/rfx/forms', \App\Livewire\Rfx\FormExecution\Livewire::class)->name('rfx.forms');
-Route::get('/rfx/dashboard', \App\Livewire\Rfx\Dashboard\Livewire::class)->name('rfx.dashboard');
+// RFX System Routes - Detail Page (비 Livewire)
+Route::get('/rfx/ai-analysis/{id}', function ($id) {
+    $service = new \App\Services\Rfx\AiAnalysis\GetRequestDetail\Service();
+    $result = $service->execute($id);
+
+    if (!$result['success']) {
+        return redirect()->route('rfx.ai-analysis')->with('error', '분석 결과를 찾을 수 없습니다.');
+    }
+
+    return view('700-page-rfx-ai-analysis-detail.000-index', [
+        'request' => $result['data']
+    ]);
+})->name('rfx.ai-analysis.detail');
 
 // RFX Navigation Test
 Route::get('/test-rfx-nav', function () {
@@ -71,8 +62,6 @@ Route::get('/test', function () {
 Route::get('/test-upload', function () {
     return view('test-upload');
 });
-
-Route::get('/test-livewire', \App\Livewire\TestComponent::class)->name('test.livewire');
 
 // File Upload and Management Pages
 Route::get('/file-upload', function () {

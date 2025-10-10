@@ -72,13 +72,23 @@ class Service
             });
 
             return array_map(function($request) {
+                $originalStatus = $request['status'] ?? 'pending';
+                $mappedStatus = $this->mapStatus($originalStatus);
+
+                // 디버그 로그
+                Log::info('File status mapping', [
+                    'file' => $request['original_filename'],
+                    'original_status' => $originalStatus,
+                    'mapped_status' => $mappedStatus
+                ]);
+
                 return [
                     'id' => $request['request_id'],
                     'name' => $request['original_filename'],
                     'originalName' => $request['original_filename'],
                     'size' => isset($request['file_size']) ? $this->formatFileSize($request['file_size']) : '-',
                     'type' => strtoupper($request['file_type'] ?? 'unknown'),
-                    'status' => $this->mapStatus($request['status'] ?? 'pending'),
+                    'status' => $mappedStatus,
                     'uploadedAt' => isset($request['created_at']) ? date('Y-m-d H:i:s', strtotime($request['created_at'])) : '-',
                     'analyzedAt' => isset($request['completed_at']) ? date('Y-m-d H:i:s', strtotime($request['completed_at'])) : null,
                     'tags' => [],

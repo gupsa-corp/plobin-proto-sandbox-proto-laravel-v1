@@ -3563,6 +3563,95 @@
         }
       }
     },
+    "/analysis/process-with-ontology": {
+      "post": {
+        "tags": [
+          "LLM Analysis",
+          "Analysis"
+        ],
+        "summary": "Process Document With Ontology",
+        "description": "Process document with ontology-based classification and analysis\n\nThis is the main endpoint that produces the rich analysis structure\nexpected by the frontend UI.\n\nSteps:\n1. OCR extraction\n2. Structure analysis (blocks → assets)\n3. Asset classification (ontology-based)\n4. LLM analysis (summary + helpful content)\n5. Version management setup\n\nArgs:\n    file: Document file (PDF or image)\n    description: Optional description\n    model: LLM model to use (default: boto)\n    language: Response language (ko/en)\n    llm_client: LLM client (injected)\n\nReturns:\n    OntologyAnalysisResponse with complete asset structure",
+        "operationId": "process_document_with_ontology_analysis_process_with_ontology_post",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_process_document_with_ontology_analysis_process_with_ontology_post"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OntologyAnalysisResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/analysis/asset-types": {
+      "get": {
+        "tags": [
+          "LLM Analysis",
+          "Analysis"
+        ],
+        "summary": "Get Asset Types",
+        "description": "Get all available asset types\n\nReturns:\n    List of asset type definitions",
+        "operationId": "get_asset_types_analysis_asset_types_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssetTypeListResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/analysis/ontology-health": {
+      "get": {
+        "tags": [
+          "LLM Analysis",
+          "Analysis"
+        ],
+        "summary": "Check Ontology Health",
+        "description": "Check ontology service health\n\nReturns:\n    Service health status",
+        "operationId": "check_ontology_health_analysis_ontology_health_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OntologyHealthResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/ppocrv5/info": {
       "get": {
         "tags": [
@@ -4145,6 +4234,122 @@
         "title": "AnalysisConfigRequest",
         "description": "문서 분석 설정"
       },
+      "AssetSummary": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "title": "Status",
+            "description": "Analysis status",
+            "default": "completed"
+          },
+          "status_icon": {
+            "type": "string",
+            "title": "Status Icon",
+            "description": "Status icon",
+            "default": "✅"
+          },
+          "ai_summary": {
+            "type": "string",
+            "title": "Ai Summary",
+            "description": "AI-generated summary (2-3 sentences)"
+          },
+          "helpful_content": {
+            "type": "string",
+            "title": "Helpful Content",
+            "description": "Actionable insights (2-3 sentences)"
+          },
+          "confidence": {
+            "type": "number",
+            "title": "Confidence",
+            "description": "Analysis confidence (0.0-1.0)",
+            "default": 0
+          },
+          "versions": {
+            "items": {
+              "$ref": "#/components/schemas/SummaryVersion"
+            },
+            "type": "array",
+            "title": "Versions",
+            "description": "Summary version history"
+          }
+        },
+        "type": "object",
+        "required": [
+          "ai_summary",
+          "helpful_content"
+        ],
+        "title": "AssetSummary",
+        "description": "Asset analysis summary"
+      },
+      "AssetTypeInfo": {
+        "properties": {
+          "type_id": {
+            "type": "string",
+            "title": "Type Id",
+            "description": "Asset type identifier"
+          },
+          "name_ko": {
+            "type": "string",
+            "title": "Name Ko",
+            "description": "Korean name"
+          },
+          "name_en": {
+            "type": "string",
+            "title": "Name En",
+            "description": "English name"
+          },
+          "icon": {
+            "type": "string",
+            "title": "Icon",
+            "description": "Emoji icon"
+          },
+          "border_color": {
+            "type": "string",
+            "title": "Border Color",
+            "description": "Tailwind CSS border color"
+          },
+          "description": {
+            "type": "string",
+            "title": "Description",
+            "description": "Type description"
+          }
+        },
+        "type": "object",
+        "required": [
+          "type_id",
+          "name_ko",
+          "name_en",
+          "icon",
+          "border_color",
+          "description"
+        ],
+        "title": "AssetTypeInfo",
+        "description": "Asset type information"
+      },
+      "AssetTypeListResponse": {
+        "properties": {
+          "asset_types": {
+            "items": {
+              "$ref": "#/components/schemas/AssetTypeInfo"
+            },
+            "type": "array",
+            "title": "Asset Types",
+            "description": "Available asset types"
+          },
+          "total_count": {
+            "type": "integer",
+            "title": "Total Count",
+            "description": "Total number of types"
+          }
+        },
+        "type": "object",
+        "required": [
+          "asset_types",
+          "total_count"
+        ],
+        "title": "AssetTypeListResponse",
+        "description": "List of available asset types"
+      },
       "BlockCreate": {
         "properties": {
           "text": {
@@ -4424,6 +4629,41 @@
           "file"
         ],
         "title": "Body_process_document_process_document_post"
+      },
+      "Body_process_document_with_ontology_analysis_process_with_ontology_post": {
+        "properties": {
+          "file": {
+            "type": "string",
+            "format": "binary",
+            "title": "File"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "model": {
+            "type": "string",
+            "title": "Model",
+            "default": "boto"
+          },
+          "language": {
+            "type": "string",
+            "title": "Language",
+            "default": "ko"
+          }
+        },
+        "type": "object",
+        "required": [
+          "file"
+        ],
+        "title": "Body_process_document_with_ontology_analysis_process_with_ontology_post"
       },
       "Body_process_image_process_image_post": {
         "properties": {
@@ -4705,6 +4945,89 @@
         "title": "DocumentAnalysisResponse",
         "description": "문서 분석 응답"
       },
+      "DocumentAsset": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id",
+            "description": "Asset ID (e.g., 'asset_001')"
+          },
+          "section_title": {
+            "type": "string",
+            "title": "Section Title",
+            "description": "Section title"
+          },
+          "asset_type": {
+            "type": "string",
+            "title": "Asset Type",
+            "description": "Asset type ID"
+          },
+          "asset_type_name": {
+            "type": "string",
+            "title": "Asset Type Name",
+            "description": "Asset type Korean name"
+          },
+          "asset_type_icon": {
+            "type": "string",
+            "title": "Asset Type Icon",
+            "description": "Asset type icon"
+          },
+          "content": {
+            "type": "string",
+            "title": "Content",
+            "description": "Original OCR text content"
+          },
+          "page_number": {
+            "type": "integer",
+            "title": "Page Number",
+            "description": "Page number",
+            "default": 1
+          },
+          "confidence": {
+            "type": "number",
+            "title": "Confidence",
+            "description": "OCR + classification confidence",
+            "default": 0
+          },
+          "bbox": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "number"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Bbox",
+            "description": "Bounding box [x1, y1, x2, y2]"
+          },
+          "summary": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/AssetSummary"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "AI analysis summary"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "section_title",
+          "asset_type",
+          "asset_type_name",
+          "asset_type_icon",
+          "content"
+        ],
+        "title": "DocumentAsset",
+        "description": "Structured document asset (section)"
+      },
       "DocumentCategory": {
         "type": "string",
         "enum": [
@@ -4820,6 +5143,45 @@
         "type": "object",
         "title": "FieldValidation",
         "description": "필드 검증 규칙"
+      },
+      "FileMetadata": {
+        "properties": {
+          "original_name": {
+            "type": "string",
+            "title": "Original Name",
+            "description": "Original filename"
+          },
+          "file_size": {
+            "type": "integer",
+            "title": "File Size",
+            "description": "File size in bytes"
+          },
+          "file_type": {
+            "type": "string",
+            "title": "File Type",
+            "description": "File type (pdf/image)"
+          },
+          "processed_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Processed At",
+            "description": "Processing timestamp"
+          },
+          "total_pages": {
+            "type": "integer",
+            "title": "Total Pages",
+            "description": "Total number of pages",
+            "default": 1
+          }
+        },
+        "type": "object",
+        "required": [
+          "original_name",
+          "file_size",
+          "file_type"
+        ],
+        "title": "FileMetadata",
+        "description": "File metadata"
       },
       "HTTPValidationError": {
         "properties": {
@@ -5041,6 +5403,85 @@
         "type": "object",
         "title": "MatchingRule",
         "description": "템플릿 매칭 규칙"
+      },
+      "OntologyAnalysisResponse": {
+        "properties": {
+          "request_id": {
+            "type": "string",
+            "title": "Request Id",
+            "description": "Request UUID"
+          },
+          "file": {
+            "$ref": "#/components/schemas/FileMetadata"
+          },
+          "document_version": {
+            "type": "string",
+            "title": "Document Version",
+            "description": "Document schema version",
+            "default": "v1.0"
+          },
+          "total_assets": {
+            "type": "integer",
+            "title": "Total Assets",
+            "description": "Number of assets"
+          },
+          "processing_time": {
+            "type": "number",
+            "title": "Processing Time",
+            "description": "Total processing time in seconds"
+          },
+          "assets": {
+            "items": {
+              "$ref": "#/components/schemas/DocumentAsset"
+            },
+            "type": "array",
+            "title": "Assets",
+            "description": "Document assets"
+          }
+        },
+        "type": "object",
+        "required": [
+          "request_id",
+          "file",
+          "total_assets",
+          "processing_time",
+          "assets"
+        ],
+        "title": "OntologyAnalysisResponse",
+        "description": "Complete ontology-based analysis response"
+      },
+      "OntologyHealthResponse": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "title": "Status",
+            "description": "Service status"
+          },
+          "available_types": {
+            "type": "integer",
+            "title": "Available Types",
+            "description": "Number of asset types"
+          },
+          "classifier_ready": {
+            "type": "boolean",
+            "title": "Classifier Ready",
+            "description": "Classifier availability"
+          },
+          "llm_analyzer_ready": {
+            "type": "boolean",
+            "title": "Llm Analyzer Ready",
+            "description": "LLM analyzer availability"
+          }
+        },
+        "type": "object",
+        "required": [
+          "status",
+          "available_types",
+          "classifier_ready",
+          "llm_analyzer_ready"
+        ],
+        "title": "OntologyHealthResponse",
+        "description": "Ontology service health status"
       },
       "PageIntegratedResult": {
         "properties": {
@@ -5482,6 +5923,64 @@
           "gpu_available"
         ],
         "title": "ServerStatus"
+      },
+      "SummaryVersion": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id",
+            "description": "Version ID"
+          },
+          "version_number": {
+            "type": "integer",
+            "title": "Version Number",
+            "description": "Version number"
+          },
+          "version_display_name": {
+            "type": "string",
+            "title": "Version Display Name",
+            "description": "Display name (e.g., 'v1 (AI 생성)')"
+          },
+          "content": {
+            "type": "string",
+            "title": "Content",
+            "description": "Summary content"
+          },
+          "created_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Created At",
+            "description": "Creation timestamp"
+          },
+          "created_by": {
+            "type": "string",
+            "title": "Created By",
+            "description": "Creator (ai_engine or user_edit)",
+            "default": "ai_engine"
+          },
+          "is_current": {
+            "type": "boolean",
+            "title": "Is Current",
+            "description": "Whether this is the current version",
+            "default": true
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "version_number",
+          "version_display_name",
+          "content"
+        ],
+        "title": "SummaryVersion",
+        "description": "Version of asset summary"
       },
       "TableColumn": {
         "properties": {

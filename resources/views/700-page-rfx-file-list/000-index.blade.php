@@ -129,16 +129,12 @@
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $file['size'] }}</td>
                                 <td class="px-6 py-4 whitespace-nowrap">
                                     <span class="px-2 py-1 text-xs rounded-full font-medium
-                                        @if($file['status'] === 'completed') bg-green-100 text-green-800
-                                        @elseif($file['status'] === 'analyzing') bg-yellow-100 text-yellow-800
-                                        @elseif($file['status'] === 'error') bg-red-100 text-red-800
+                                        @if($file['status'] === '완료') bg-green-100 text-green-800
+                                        @elseif($file['status'] === '분석중') bg-yellow-100 text-yellow-800
+                                        @elseif($file['status'] === '오류') bg-red-100 text-red-800
                                         @else bg-blue-100 text-blue-800
                                         @endif">
-                                        @if($file['status'] === 'completed') 완료
-                                        @elseif($file['status'] === 'analyzing') 분석중
-                                        @elseif($file['status'] === 'error') 오류
-                                        @else 업로드됨
-                                        @endif
+                                        {{ $file['status'] }}
                                     </span>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $file['uploadedAt'] }}</td>
@@ -151,15 +147,15 @@
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                                     <div class="flex items-center space-x-2">
-                                        <button wire:click="selectFile({{ $file['id'] }})" class="text-blue-600 hover:text-blue-900">
+                                        <button wire:click="selectFile('{{ $file['id'] }}')" class="text-blue-600 hover:text-blue-900">
                                             상세보기
                                         </button>
-                                        @if($file['status'] === 'uploaded')
-                                        <button wire:click="analyzeFile({{ $file['id'] }})" class="text-green-600 hover:text-green-900">
-                                            분석시작
+                                        @if($file['status'] === '업로드됨' || $file['status'] === '완료')
+                                        <button wire:click="requestAiAnalysis('{{ $file['id'] }}')" class="text-purple-600 hover:text-purple-900 font-semibold">
+                                            AI 분석
                                         </button>
                                         @endif
-                                        <button wire:click="deleteFile({{ $file['id'] }})" class="text-red-600 hover:text-red-900">
+                                        <button wire:click="deleteFile('{{ $file['id'] }}')" class="text-red-600 hover:text-red-900">
                                             삭제
                                         </button>
                                     </div>
@@ -188,12 +184,12 @@
 
         <!-- File Detail Modal -->
         @if($selectedFile)
-        <div class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50" wire:click="selectFile(null)">
+        <div class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50" wire:click="selectFile('')">
             <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white" wire:click.stop>
                 <div class="mt-3">
                     <div class="flex items-center justify-between mb-4">
                         <h3 class="text-lg font-medium text-gray-900">파일 상세 정보</h3>
-                        <button wire:click="selectFile(null)" class="text-gray-400 hover:text-gray-600">
+                        <button wire:click="selectFile('')" class="text-gray-400 hover:text-gray-600">
                             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
                             </svg>
@@ -214,16 +210,12 @@
                         <div>
                             <label class="block text-sm font-medium text-gray-700">상태</label>
                             <span class="px-2 py-1 text-xs rounded-full font-medium
-                                @if($selectedFile['status'] === 'completed') bg-green-100 text-green-800
-                                @elseif($selectedFile['status'] === 'analyzing') bg-yellow-100 text-yellow-800
-                                @elseif($selectedFile['status'] === 'error') bg-red-100 text-red-800
+                                @if($selectedFile['status'] === '완료') bg-green-100 text-green-800
+                                @elseif($selectedFile['status'] === '분석중') bg-yellow-100 text-yellow-800
+                                @elseif($selectedFile['status'] === '오류') bg-red-100 text-red-800
                                 @else bg-blue-100 text-blue-800
                                 @endif">
-                                @if($selectedFile['status'] === 'completed') 완료
-                                @elseif($selectedFile['status'] === 'analyzing') 분석중
-                                @elseif($selectedFile['status'] === 'error') 오류
-                                @else 업로드됨
-                                @endif
+                                {{ $selectedFile['status'] }}
                             </span>
                         </div>
                         

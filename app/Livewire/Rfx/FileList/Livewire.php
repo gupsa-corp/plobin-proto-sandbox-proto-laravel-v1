@@ -7,6 +7,7 @@ use Livewire\WithPagination;
 use App\Services\Rfx\FileManager\GetFiles\Service as GetFilesService;
 use App\Services\Rfx\FileManager\AnalyzeFile\Service as AnalyzeFileService;
 use App\Services\Rfx\FileManager\DeleteFile\Service as DeleteFileService;
+use App\Services\Rfx\AiAnalysis\QueueRequest\Service as QueueAiAnalysisService;
 
 class Livewire extends Component
 {
@@ -71,10 +72,21 @@ class Livewire extends Component
     {
         $service = new DeleteFileService();
         $result = $service->execute($fileId);
-        
+
         if ($result['success']) {
             session()->flash('message', '파일이 삭제되었습니다.');
             $this->loadFiles();
+        }
+    }
+
+    public function requestAiAnalysis($fileId)
+    {
+        $service = new QueueAiAnalysisService();
+        $result = $service->execute($fileId);
+
+        if ($result['success']) {
+            session()->flash('message', 'AI 분석이 큐에 등록되었습니다.');
+            return redirect()->route('rfx.ai-analysis');
         }
     }
 
@@ -92,6 +104,7 @@ class Livewire extends Component
 
     public function render()
     {
-        return view('700-page-rfx-file-list/000-index');
+        return view('700-page-rfx-file-list/000-index')
+            ->layout('components.layouts.app');
     }
 }
