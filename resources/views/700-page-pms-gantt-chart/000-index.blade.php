@@ -117,19 +117,26 @@
                             @endphp
                             
                             <!-- Gantt Bar -->
-                            <div class="absolute top-1/2 transform -translate-y-1/2 h-6 {{ $barColor }} rounded cursor-pointer hover:shadow-md transition-shadow"
+                            <div class="gantt-bar absolute top-1/2 transform -translate-y-1/2 h-6 {{ $barColor }} rounded cursor-move hover:shadow-md transition-all duration-300 ease-in-out"
                                  style="left: {{ $startPos }}%; width: {{ $width }}%;"
-                                 wire:click="selectProject({{ $project['id'] }})">
+                                 data-project-id="{{ $project['id'] }}"
+                                 data-start-pos="{{ $startPos }}"
+                                 data-width="{{ $width }}"
+                                 onclick="selectProject({{ $project['id'] }})">
                                 <!-- Progress Overlay -->
-                                <div class="h-full bg-black bg-opacity-20 rounded" 
+                                <div class="h-full bg-black bg-opacity-20 rounded transition-all duration-300" 
                                      style="width: {{ $project['progress'] }}%"></div>
                                 
                                 <!-- Project Name on Bar -->
-                                <div class="absolute inset-0 flex items-center justify-center">
+                                <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
                                     <span class="text-xs text-white font-medium truncate px-2">
                                         {{ $project['name'] }}
                                     </span>
                                 </div>
+
+                                <!-- Resize Handles -->
+                                <div class="resize-handle-left absolute left-0 top-0 w-2 h-full cursor-ew-resize bg-white bg-opacity-0 hover:bg-opacity-50 transition-all duration-200"></div>
+                                <div class="resize-handle-right absolute right-0 top-0 w-2 h-full cursor-ew-resize bg-white bg-opacity-0 hover:bg-opacity-50 transition-all duration-200"></div>
                             </div>
 
                             <!-- Milestone Markers -->
@@ -250,4 +257,285 @@
         </div>
         @endif
     </div>
+
+    <!-- Drag & Drop JavaScript -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            let isDragging = false;
+            let isResizing = false;
+            let currentElement = null;
+            let dragStartX = 0;
+            let initialLeft = 0;
+            let initialWidth = 0;
+            let resizeType = null;
+
+            // 드래그 가능한 간트 바 초기화
+            function initializeGanttBars() {
+                const ganttBars = document.querySelectorAll('.gantt-bar');
+                
+                ganttBars.forEach(bar => {
+                    // 메인 바 드래그 이벤트
+                    bar.addEventListener('mousedown', function(e) {
+                        if (e.target.classList.contains('resize-handle-left') || 
+                            e.target.classList.contains('resize-handle-right')) {
+                            return; // 리사이즈 핸들 클릭 시 드래그 무시
+                        }
+                        
+                        isDragging = true;
+                        currentElement = this;
+                        dragStartX = e.clientX;
+                        initialLeft = parseFloat(this.style.left);
+                        
+                        // 드래그 중 시각적 피드백
+                        this.style.opacity = '0.8';
+                        this.style.transform = 'translateY(-50%) scale(1.05)';
+                        this.style.zIndex = '1000';
+                        
+                        e.preventDefault();
+                    });
+
+                    // 리사이즈 핸들 이벤트
+                    const leftHandle = bar.querySelector('.resize-handle-left');
+                    const rightHandle = bar.querySelector('.resize-handle-right');
+
+                    if (leftHandle) {
+                        leftHandle.addEventListener('mousedown', function(e) {
+                            isResizing = true;
+                            resizeType = 'left';
+                            currentElement = bar;
+                            dragStartX = e.clientX;
+                            initialLeft = parseFloat(bar.style.left);
+                            initialWidth = parseFloat(bar.style.width);
+                            
+                            bar.style.opacity = '0.8';
+                            e.preventDefault();
+                            e.stopPropagation();
+                        });
+                    }
+
+                    if (rightHandle) {
+                        rightHandle.addEventListener('mousedown', function(e) {
+                            isResizing = true;
+                            resizeType = 'right';
+                            currentElement = bar;
+                            dragStartX = e.clientX;
+                            initialWidth = parseFloat(bar.style.width);
+                            
+                            bar.style.opacity = '0.8';
+                            e.preventDefault();
+                            e.stopPropagation();
+                        });
+                    }
+                });
+            }
+
+            // 마우스 이동 이벤트
+            document.addEventListener('mousemove', function(e) {
+                if (isDragging && currentElement) {
+                    const container = currentElement.closest('.flex-1');
+                    const containerWidth = container.offsetWidth;
+                    const deltaX = e.clientX - dragStartX;
+                    const deltaPercent = (deltaX / containerWidth) * 100;
+                    
+                    let newLeft = initialLeft + deltaPercent;
+                    
+                    // 경계 체크
+                    if (newLeft < 0) newLeft = 0;
+                    if (newLeft > 85) newLeft = 85; // 여유 공간 확보
+                    
+                    currentElement.style.left = newLeft + '%';
+                    
+                    // 실시간 날짜 피드백 (옵션)
+                    showDatePreview(currentElement, newLeft);
+                    
+                } else if (isResizing && currentElement) {
+                    const container = currentElement.closest('.flex-1');
+                    const containerWidth = container.offsetWidth;
+                    const deltaX = e.clientX - dragStartX;
+                    const deltaPercent = (deltaX / containerWidth) * 100;
+                    
+                    if (resizeType === 'left') {
+                        let newLeft = initialLeft + deltaPercent;
+                        let newWidth = initialWidth - deltaPercent;
+                        
+                        if (newLeft >= 0 && newWidth >= 5) { // 최소 너비 5%
+                            currentElement.style.left = newLeft + '%';
+                            currentElement.style.width = newWidth + '%';
+                        }
+                    } else if (resizeType === 'right') {
+                        let newWidth = initialWidth + deltaPercent;
+                        const currentLeft = parseFloat(currentElement.style.left);
+                        
+                        if (newWidth >= 5 && (currentLeft + newWidth) <= 95) { // 최소 너비와 경계 체크
+                            currentElement.style.width = newWidth + '%';
+                        }
+                    }
+                }
+            });
+
+            // 마우스 업 이벤트
+            document.addEventListener('mouseup', function(e) {
+                if (isDragging && currentElement) {
+                    // 드래그 완료 시 애니메이션 효과
+                    currentElement.style.opacity = '1';
+                    currentElement.style.transform = 'translateY(-50%) scale(1)';
+                    currentElement.style.zIndex = 'auto';
+                    
+                    // 위치 정보 업데이트
+                    updateProjectPosition(currentElement);
+                    
+                    // 성공 애니메이션
+                    showSuccessAnimation(currentElement);
+                    
+                    isDragging = false;
+                    currentElement = null;
+                    hideDatePreview();
+                    
+                } else if (isResizing && currentElement) {
+                    // 리사이즈 완료
+                    currentElement.style.opacity = '1';
+                    
+                    // 크기 정보 업데이트
+                    updateProjectSize(currentElement);
+                    
+                    // 성공 애니메이션
+                    showSuccessAnimation(currentElement);
+                    
+                    isResizing = false;
+                    resizeType = null;
+                    currentElement = null;
+                }
+            });
+
+            // 날짜 미리보기 표시
+            function showDatePreview(element, leftPercent) {
+                let preview = document.getElementById('date-preview');
+                if (!preview) {
+                    preview = document.createElement('div');
+                    preview.id = 'date-preview';
+                    preview.className = 'fixed bg-black text-white px-3 py-1 rounded text-sm z-50 pointer-events-none transition-all duration-200';
+                    document.body.appendChild(preview);
+                }
+                
+                // 날짜 계산 (예시)
+                const startDate = new Date();
+                startDate.setDate(startDate.getDate() + Math.round(leftPercent * 1.2)); // 대략적 계산
+                
+                preview.textContent = `시작일: ${startDate.toLocaleDateString('ko-KR')}`;
+                preview.style.left = (event.clientX + 10) + 'px';
+                preview.style.top = (event.clientY - 30) + 'px';
+                preview.style.display = 'block';
+            }
+
+            function hideDatePreview() {
+                const preview = document.getElementById('date-preview');
+                if (preview) {
+                    preview.style.display = 'none';
+                }
+            }
+
+            // 성공 애니메이션
+            function showSuccessAnimation(element) {
+                // 펄스 효과
+                element.style.transition = 'all 0.3s ease-in-out';
+                element.style.boxShadow = '0 0 20px rgba(34, 197, 94, 0.6)';
+                
+                setTimeout(() => {
+                    element.style.boxShadow = 'none';
+                    
+                    // 체크마크 애니메이션
+                    const checkmark = document.createElement('div');
+                    checkmark.innerHTML = '✓';
+                    checkmark.className = 'absolute -top-8 left-1/2 transform -translate-x-1/2 bg-green-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold animate-bounce';
+                    element.appendChild(checkmark);
+                    
+                    setTimeout(() => {
+                        checkmark.remove();
+                    }, 1500);
+                }, 300);
+            }
+
+            // 프로젝트 위치 업데이트
+            function updateProjectPosition(element) {
+                const projectId = element.dataset.projectId;
+                const newLeft = parseFloat(element.style.left);
+                const width = parseFloat(element.style.width);
+                
+                // 실제 날짜 계산 (예시)
+                const startDate = calculateDateFromPercent(newLeft);
+                const endDate = calculateDateFromPercent(newLeft + width);
+                
+                // Livewire 메서드 호출
+                if (window.Livewire) {
+                    window.Livewire.find(element.closest('[wire\\:id]').getAttribute('wire:id'))
+                        .call('updateProjectDates', projectId, startDate, endDate);
+                }
+                
+                console.log(`프로젝트 ${projectId} 위치 업데이트: ${startDate} ~ ${endDate}`);
+            }
+
+            // 프로젝트 크기 업데이트  
+            function updateProjectSize(element) {
+                const projectId = element.dataset.projectId;
+                const left = parseFloat(element.style.left);
+                const width = parseFloat(element.style.width);
+                
+                const startDate = calculateDateFromPercent(left);
+                const endDate = calculateDateFromPercent(left + width);
+                
+                if (window.Livewire) {
+                    window.Livewire.find(element.closest('[wire\\:id]').getAttribute('wire:id'))
+                        .call('updateProjectDates', projectId, startDate, endDate);
+                }
+                
+                console.log(`프로젝트 ${projectId} 크기 업데이트: ${startDate} ~ ${endDate}`);
+            }
+
+            // 퍼센트를 날짜로 변환 (예시 함수)
+            function calculateDateFromPercent(percent) {
+                const baseDate = new Date('2024-10-01');
+                const daysToAdd = Math.round((percent / 100) * 120); // 4개월 = 120일
+                baseDate.setDate(baseDate.getDate() + daysToAdd);
+                return baseDate.toISOString().split('T')[0];
+            }
+
+            // 프로젝트 선택 함수
+            window.selectProject = function(projectId) {
+                if (!isDragging && !isResizing) {
+                    if (window.Livewire) {
+                        window.Livewire.find(document.querySelector('[wire\\:id]').getAttribute('wire:id'))
+                            .call('selectProject', projectId);
+                    }
+                }
+            };
+
+            // 초기화
+            initializeGanttBars();
+
+            // Livewire 업데이트 후 재초기화
+            document.addEventListener('livewire:morph.updated', function() {
+                setTimeout(initializeGanttBars, 100);
+            });
+
+            // 업데이트 성공 메시지 리스너
+            window.addEventListener('project-updated', function(event) {
+                // 성공 메시지 표시
+                const toast = document.createElement('div');
+                toast.className = 'fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50 transform transition-all duration-300 translate-x-full';
+                toast.textContent = event.detail.message || '프로젝트가 업데이트되었습니다.';
+                document.body.appendChild(toast);
+                
+                // 슬라이드 인 애니메이션
+                setTimeout(() => {
+                    toast.style.transform = 'translateX(0)';
+                }, 10);
+                
+                // 자동 제거
+                setTimeout(() => {
+                    toast.style.transform = 'translateX(full)';
+                    setTimeout(() => toast.remove(), 300);
+                }, 3000);
+            });
+        });
+    </script>
 </div>

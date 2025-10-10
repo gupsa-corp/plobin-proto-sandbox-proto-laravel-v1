@@ -34,6 +34,21 @@ class Livewire extends Component
         $this->selectedProject = $projectId;
     }
 
+    public function updateProjectDates($projectId, $startDate, $endDate)
+    {
+        // 프로젝트 날짜 업데이트 로직
+        foreach($this->projects as &$project) {
+            if($project['id'] == $projectId) {
+                $project['startDate'] = $startDate;
+                $project['endDate'] = $endDate;
+                break;
+            }
+        }
+        
+        // 실제로는 서비스를 통해 데이터베이스 업데이트 필요
+        $this->dispatch('project-updated', ['projectId' => $projectId, 'message' => '프로젝트 일정이 업데이트되었습니다.']);
+    }
+
     public function loadGanttData()
     {
         $service = new Service();

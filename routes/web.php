@@ -41,6 +41,11 @@ Route::get('/pms/final-test', function() {
     return view('pms-final-test');
 });
 
+// 캘린더 테스트 가이드
+Route::get('/pms/calendar-test', function() {
+    return view('calendar-test');
+});
+
 // RFX System Routes
 Route::get('/rfx/upload', \App\Livewire\Rfx\FileUpload\Livewire::class)->name('rfx.upload');
 Route::get('/rfx/files', \App\Livewire\Rfx\FileList\Livewire::class)->name('rfx.files');
@@ -48,6 +53,16 @@ Route::get('/rfx/analysis', \App\Livewire\Rfx\DocumentAnalysis\Livewire::class)-
 Route::get('/rfx/requests', \App\Livewire\Rfx\AnalysisRequests\Livewire::class)->name('rfx.requests');
 Route::get('/rfx/forms', \App\Livewire\Rfx\FormExecution\Livewire::class)->name('rfx.forms');
 Route::get('/rfx/dashboard', \App\Livewire\Rfx\Dashboard\Livewire::class)->name('rfx.dashboard');
+
+// RFX Navigation Test
+Route::get('/test-rfx-nav', function () {
+    return view('test-rfx-navigation');
+})->name('test.rfx.nav');
+
+// RFX Forms Test (simulating rfx/forms path)
+Route::get('/rfx/forms-test', function () {
+    return view('test-rfx-forms');
+})->name('test.rfx.forms');
 
 Route::get('/test', function () {
     return 'Test route works!';

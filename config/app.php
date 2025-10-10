@@ -123,4 +123,15 @@ return [
         'store' => env('APP_MAINTENANCE_STORE', 'database'),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | OCR Service Configuration
+    |--------------------------------------------------------------------------
+    |
+    | OCR 서비스 URL 설정
+    |
+    */
+
+    'ocr_service_url' => env('OCR_SERVICE_URL', 'http://seoul.gupsa.net:6003'),
+
 ];

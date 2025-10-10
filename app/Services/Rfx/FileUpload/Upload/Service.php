@@ -10,12 +10,20 @@ use Illuminate\Support\Str;
 
 class Service
 {
-    public function execute($request): array
+    public function execute($data): array
     {
         try {
-            $file = $request->file('file');
-            $description = $request->input('description');
-            $tags = $request->input('tags', []);
+            // Livewire에서 배열로 전달받는 경우와 HTTP Request 객체 구분
+            if (is_array($data)) {
+                $file = $data['file'];
+                $description = $data['description'] ?? '';
+                $tags = $data['tags'] ?? [];
+            } else {
+                // HTTP Request 객체인 경우 (API 호출)
+                $file = $data->file('file');
+                $description = $data->input('description');
+                $tags = $data->input('tags', []);
+            }
             
             $originalName = $file->getClientOriginalName();
             $storedName = Str::uuid() . '_' . $originalName;
@@ -31,18 +39,22 @@ class Service
                 'mime_type' => $mimeType,
                 'file_size' => $fileSize,
                 'status' => 'uploaded',
-                'uploaded_by' => 1, // TODO: 실제 인증된 사용자 ID로 변경
+                'uploaded_by' => 1, // 기본 테스트 사용자 ID
                 'tags' => $tags,
                 'description' => $description
             ]);
             
+            // 파일 타입 추출 (확장자 기반)
+            $fileExtension = strtolower(pathinfo($originalName, PATHINFO_EXTENSION));
+            
             return Response::success([
-                'file_id' => $uploadedFile->id,
-                'original_name' => $uploadedFile->original_name,
-                'file_size' => $uploadedFile->file_size,
-                'formatted_size' => $uploadedFile->formatted_file_size,
+                'id' => $uploadedFile->id,
+                'name' => $uploadedFile->original_name,
+                'size' => $uploadedFile->formatted_file_size,
+                'type' => $fileExtension,
+                'uploadedAt' => $uploadedFile->created_at->format('Y-m-d H:i:s'),
                 'status' => $uploadedFile->status,
-                'uploaded_at' => $uploadedFile->created_at->format('Y-m-d H:i:s')
+                'uploader' => 'Admin User'
             ]);
             
         } catch (\Exception $e) {

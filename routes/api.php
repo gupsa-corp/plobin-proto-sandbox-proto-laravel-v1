@@ -16,6 +16,7 @@ Route::get('/file-upload/list', \App\Http\Controllers\FileUpload\List\Controller
 Route::post('/document-analysis/create', \App\Http\Controllers\DocumentAnalysis\Create\Controller::class);
 
 // RFX (Request for Analysis) API Routes
+Route::post('/rfx/upload', \App\Http\Controllers\Rfx\Upload\Controller::class);
 Route::post('/rfx/file-upload', \App\Http\Controllers\Rfx\FileUpload\Controller::class);
 Route::get('/rfx/file-download/{file_id}', \App\Http\Controllers\Rfx\FileDownload\Controller::class);
 

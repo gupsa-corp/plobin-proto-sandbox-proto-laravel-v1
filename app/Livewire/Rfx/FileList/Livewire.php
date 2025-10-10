@@ -4,7 +4,9 @@ namespace App\Livewire\Rfx\FileList;
 
 use Livewire\Component;
 use Livewire\WithPagination;
-use App\Services\Rfx\FileManager\Service;
+use App\Services\Rfx\FileManager\GetFiles\Service as GetFilesService;
+use App\Services\Rfx\FileManager\AnalyzeFile\Service as AnalyzeFileService;
+use App\Services\Rfx\FileManager\DeleteFile\Service as DeleteFileService;
 
 class Livewire extends Component
 {
@@ -56,8 +58,8 @@ class Livewire extends Component
 
     public function analyzeFile($fileId)
     {
-        $service = new Service();
-        $result = $service->analyzeFile($fileId);
+        $service = new AnalyzeFileService();
+        $result = $service->execute($fileId);
         
         if ($result['success']) {
             session()->flash('message', '분석이 시작되었습니다.');
@@ -67,8 +69,8 @@ class Livewire extends Component
 
     public function deleteFile($fileId)
     {
-        $service = new Service();
-        $result = $service->deleteFile($fileId);
+        $service = new DeleteFileService();
+        $result = $service->execute($fileId);
         
         if ($result['success']) {
             session()->flash('message', '파일이 삭제되었습니다.');
@@ -78,8 +80,8 @@ class Livewire extends Component
 
     public function loadFiles()
     {
-        $service = new Service();
-        $this->files = $service->getFiles([
+        $service = new GetFilesService();
+        $this->files = $service->execute([
             'search' => $this->search,
             'status' => $this->statusFilter,
             'type' => $this->typeFilter,

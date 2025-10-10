@@ -4,7 +4,10 @@
     "type": "module",
     "scripts": {
         "build": "vite build",
-        "dev": "vite"
+        "dev": "vite",
+        "serve": "concurrently \"php artisan serve --host=127.0.0.1 --port=8001\" \"php artisan queue:work --daemon --tries=3 --timeout=300\"",
+        "serve:verbose": "concurrently --names \"SERVER,QUEUE\" --prefix-colors \"cyan,yellow\" \"php artisan serve --host=127.0.0.1 --port=8001\" \"php artisan queue:work --verbose --tries=3 --timeout=300\"",
+        "serve:dev": "concurrently --names \"SERVER,QUEUE,VITE\" --prefix-colors \"cyan,yellow,green\" \"php artisan serve --host=127.0.0.1 --port=8001\" \"php artisan queue:work --daemon --tries=3 --timeout=300\" \"vite\""
     },
     "devDependencies": {
         "@tailwindcss/vite": "^4.0.0",

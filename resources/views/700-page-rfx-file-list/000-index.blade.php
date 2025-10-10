@@ -1,15 +1,12 @@
-<div class="p-6 bg-gray-50 min-h-screen">
+<div>
+    <!-- RFX 탭 네비게이션 -->
+    @include('100-rfx-tab-navigation')
+
+    <div class="p-6 bg-gray-50 min-h-screen">
     <div class="max-w-7xl mx-auto">
         <!-- Header -->
         <div class="mb-8">
-            <div class="flex items-center space-x-4 mb-4">
-                <button onclick="history.back()" class="text-gray-600 hover:text-gray-900">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
-                    </svg>
-                </button>
-                <h1 class="text-3xl font-bold text-gray-900">파일 관리</h1>
-            </div>
+            <h1 class="text-3xl font-bold text-gray-900">파일 관리</h1>
             <p class="text-gray-600">업로드된 파일을 관리하고 분석 상태를 확인하세요</p>
         </div>
 
@@ -279,5 +276,6 @@
             </div>
         </div>
         @endif
+    </div>
     </div>
 </div>
