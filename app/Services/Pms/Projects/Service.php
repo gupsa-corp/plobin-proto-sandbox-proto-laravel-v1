@@ -2,7 +2,7 @@
 
 namespace App\Services\Pms\Projects;
 
-use App\Models\Plobin\Project;
+use App\Models\Pms\Project;
 
 /**
  * PMS 도메인 프로젝트 관리 서비스
@@ -17,7 +17,7 @@ class Service
         if (!empty($filters['search'])) {
             $search = $filters['search'];
             $query->where(function($q) use ($search) {
-                $q->where('name', 'like', "%{$search}%")
+                $q->where('title', 'like', "%{$search}%")
                   ->orWhere('description', 'like', "%{$search}%");
             });
         }
@@ -36,10 +36,10 @@ class Service
         if (!empty($filters['sortBy'])) {
             $sortBy = $filters['sortBy'];
             $sortDirection = $filters['sortDirection'] ?? 'asc';
-            
+
             // created_at을 created_at으로 매핑 (DB 컬럼명)
             $sortColumn = $sortBy === 'created_at' ? 'created_at' : $sortBy;
-            
+
             $query->orderBy($sortColumn, $sortDirection);
         } else {
             $query->orderBy('created_at', 'desc');
@@ -51,14 +51,14 @@ class Service
         $formattedProjects = $projects->map(function($project) {
             return [
                 'id' => $project->id,
-                'name' => $project->name,
+                'name' => $project->title, // title → name 매핑
                 'description' => $project->description,
                 'status' => $project->status,
                 'priority' => $project->priority,
                 'progress' => $project->progress,
                 'startDate' => $project->start_date?->format('Y-m-d'),
                 'endDate' => $project->end_date?->format('Y-m-d'),
-                'team' => $project->team ?? [],
+                'team' => $project->tags ?? [], // tags를 team으로 매핑
                 'createdAt' => $project->created_at->format('Y-m-d H:i:s')
             ];
         })->toArray();

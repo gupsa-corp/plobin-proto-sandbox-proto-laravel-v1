@@ -18,6 +18,8 @@ return new class extends Migration
             $table->string('status')->default('planning'); // planning, in_progress, review, completed
             $table->string('assignee')->nullable();
             $table->string('priority')->default('medium'); // low, medium, high
+            $table->date('start_date')->nullable();
+            $table->date('end_date')->nullable();
             $table->date('due_date')->nullable();
             $table->json('tags')->nullable();
             $table->integer('progress')->default(0); // 0-100

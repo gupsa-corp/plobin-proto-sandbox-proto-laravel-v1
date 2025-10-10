@@ -14,6 +14,8 @@ class Project extends Model
         'status',
         'assignee',
         'priority',
+        'start_date',
+        'end_date',
         'due_date',
         'tags',
         'progress',
@@ -21,6 +23,8 @@ class Project extends Model
 
     protected $casts = [
         'tags' => 'array',
+        'start_date' => 'date',
+        'end_date' => 'date',
         'due_date' => 'date',
         'progress' => 'integer',
     ];

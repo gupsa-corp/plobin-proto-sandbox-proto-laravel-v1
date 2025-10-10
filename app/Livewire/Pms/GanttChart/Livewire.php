@@ -9,7 +9,7 @@ class Livewire extends Component
 {
     public $projects;
     public $timeRange = '3months';
-    public $viewMode = 'month';
+    public $viewMode = 'Month';
     public $selectedProject = null;
 
     public function mount()
@@ -58,6 +58,7 @@ class Livewire extends Component
 
     public function render()
     {
-        return view('700-page-pms-gantt-chart/000-index');
+        return view('700-page-pms-gantt-chart.000-index')
+            ->layout('300-layout-common.000-app');
     }
 }
