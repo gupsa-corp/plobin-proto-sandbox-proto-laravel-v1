@@ -8,7 +8,6 @@ export default defineConfig({
             input: ['resources/css/app.css', 'resources/js/app.js'],
             refresh: true,
             detectTls: false, // Valet TLS 감지 비활성화
-            detectTls: false,
         }),
         tailwindcss(),
     ],
