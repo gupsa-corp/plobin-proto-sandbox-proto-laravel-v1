@@ -7,6 +7,8 @@ use App\Services\Rfx\DocumentAnalysis\List\Service as ListService;
 use App\Services\Rfx\DocumentAnalysis\GetResult\Service as GetResultService;
 use App\Services\Rfx\DocumentAnalysis\Regenerate\Service as RegenerateService;
 use App\Services\Rfx\DocumentAnalysis\Export\Service as ExportService;
+use App\Services\Rfx\DocumentAnalysis\DownloadOriginal\Service as DownloadOriginalService;
+use App\Services\Rfx\DocumentAnalysis\DownloadVisualization\Service as DownloadVisualizationService;
 
 class Livewire extends Component
 {
@@ -59,10 +61,22 @@ class Livewire extends Component
     {
         $service = new ExportService();
         $result = $service->execute($documentId, $format);
-        
+
         if ($result['success']) {
             session()->flash('message', "분석 결과를 {$format} 형식으로 내보냈습니다.");
         }
+    }
+
+    public function downloadOriginal($documentId, $pageNumber = 1)
+    {
+        $service = new DownloadOriginalService();
+        return $service->execute($documentId, $pageNumber);
+    }
+
+    public function downloadVisualization($documentId, $pageNumber = 1)
+    {
+        $service = new DownloadVisualizationService();
+        return $service->execute($documentId, $pageNumber);
     }
 
     public function loadDocuments()

@@ -45,8 +45,8 @@
                     <div class="p-6">
                         <div class="space-y-3">
                             @foreach($documents as $document)
-                            <div 
-                                wire:click="selectDocument({{ $document['id'] }})"
+                            <div
+                                wire:click="selectDocument('{{ $document['id'] }}')"
                                 class="p-3 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 {{ $selectedDocument && $selectedDocument['id'] === $document['id'] ? 'ring-2 ring-blue-500 bg-blue-50' : '' }}"
                             >
                                 <div class="flex items-center justify-between">
@@ -59,16 +59,12 @@
                                     </div>
                                     <div class="ml-2">
                                         <span class="px-2 py-1 text-xs rounded-full font-medium
-                                            @if($document['status'] === 'completed') bg-green-100 text-green-800
-                                            @elseif($document['status'] === 'analyzing') bg-yellow-100 text-yellow-800
-                                            @elseif($document['status'] === 'error') bg-red-100 text-red-800
+                                            @if($document['status'] === '완료') bg-green-100 text-green-800
+                                            @elseif($document['status'] === '분석중') bg-yellow-100 text-yellow-800
+                                            @elseif($document['status'] === '오류') bg-red-100 text-red-800
                                             @else bg-gray-100 text-gray-800
                                             @endif">
-                                            @if($document['status'] === 'completed') 완료
-                                            @elseif($document['status'] === 'analyzing') 분석중
-                                            @elseif($document['status'] === 'error') 오류
-                                            @else 대기
-                                            @endif
+                                            {{ $document['status'] }}
                                         </span>
                                     </div>
                                 </div>
@@ -100,17 +96,30 @@
                         <div class="flex items-center justify-between mb-4">
                             <h3 class="text-lg font-semibold text-gray-900">{{ $selectedDocument['fileName'] }}</h3>
                             <div class="flex items-center space-x-2">
-                                <button wire:click="regenerateAnalysis({{ $selectedDocument['id'] }})" class="text-sm bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700">
+                                <button wire:click="regenerateAnalysis('{{ $selectedDocument['id'] }}')" class="text-sm bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700">
                                     재분석
                                 </button>
+
+                                <!-- 다운로드 메뉴 -->
+                                <div class="relative">
+                                    <button class="text-sm bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700" onclick="document.getElementById('download-menu-{{ $selectedDocument['id'] }}').classList.toggle('hidden')">
+                                        다운로드
+                                    </button>
+                                    <div id="download-menu-{{ $selectedDocument['id'] }}" class="hidden absolute right-0 mt-2 w-40 bg-white rounded-md shadow-lg border border-gray-200 z-10">
+                                        <button wire:click="downloadOriginal('{{ $selectedDocument['id'] }}', 1)" class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">원본 이미지</button>
+                                        <button wire:click="downloadVisualization('{{ $selectedDocument['id'] }}', 1)" class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">시각화 이미지</button>
+                                    </div>
+                                </div>
+
+                                <!-- 내보내기 메뉴 -->
                                 <div class="relative">
                                     <button class="text-sm bg-gray-600 text-white px-3 py-1 rounded hover:bg-gray-700" onclick="document.getElementById('export-menu-{{ $selectedDocument['id'] }}').classList.toggle('hidden')">
                                         내보내기
                                     </button>
                                     <div id="export-menu-{{ $selectedDocument['id'] }}" class="hidden absolute right-0 mt-2 w-32 bg-white rounded-md shadow-lg border border-gray-200 z-10">
-                                        <button wire:click="exportAnalysis({{ $selectedDocument['id'] }}, 'pdf')" class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">PDF</button>
-                                        <button wire:click="exportAnalysis({{ $selectedDocument['id'] }}, 'excel')" class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">Excel</button>
-                                        <button wire:click="exportAnalysis({{ $selectedDocument['id'] }}, 'json')" class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">JSON</button>
+                                        <button wire:click="exportAnalysis('{{ $selectedDocument['id'] }}', 'pdf')" class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">PDF</button>
+                                        <button wire:click="exportAnalysis('{{ $selectedDocument['id'] }}', 'excel')" class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">Excel</button>
+                                        <button wire:click="exportAnalysis('{{ $selectedDocument['id'] }}', 'json')" class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">JSON</button>
                                     </div>
                                 </div>
                             </div>
@@ -120,16 +129,12 @@
                             <div>
                                 <span class="text-gray-500">상태:</span>
                                 <span class="ml-1 px-2 py-1 text-xs rounded-full font-medium
-                                    @if($selectedDocument['status'] === 'completed') bg-green-100 text-green-800
-                                    @elseif($selectedDocument['status'] === 'analyzing') bg-yellow-100 text-yellow-800
-                                    @elseif($selectedDocument['status'] === 'error') bg-red-100 text-red-800
+                                    @if($selectedDocument['status'] === '완료') bg-green-100 text-green-800
+                                    @elseif($selectedDocument['status'] === '분석중') bg-yellow-100 text-yellow-800
+                                    @elseif($selectedDocument['status'] === '오류') bg-red-100 text-red-800
                                     @else bg-gray-100 text-gray-800
                                     @endif">
-                                    @if($selectedDocument['status'] === 'completed') 완료
-                                    @elseif($selectedDocument['status'] === 'analyzing') 분석중
-                                    @elseif($selectedDocument['status'] === 'error') 오류
-                                    @else 대기
-                                    @endif
+                                    {{ $selectedDocument['status'] }}
                                 </span>
                             </div>
                             @if($selectedDocument['confidence'])
@@ -147,6 +152,48 @@
                             <div>
                                 <span class="text-gray-500">페이지:</span>
                                 <span class="ml-1 font-medium">{{ $selectedDocument['pageCount'] }}페이지</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Document Preview -->
+                    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                        <h3 class="text-lg font-semibold text-gray-900 mb-4">문서 미리보기</h3>
+                        <div class="flex flex-col gap-4">
+                            <!-- Original Image -->
+                            <div>
+                                <div class="flex items-center justify-between mb-2">
+                                    <h4 class="text-sm font-medium text-gray-700">원본 이미지</h4>
+                                    <button wire:click="downloadOriginal('{{ $selectedDocument['id'] }}', 1)" class="text-xs text-blue-600 hover:text-blue-800">
+                                        다운로드
+                                    </button>
+                                </div>
+                                <div class="border border-gray-200 rounded-lg overflow-hidden bg-gray-50">
+                                    <img
+                                        src="{{ config('services.ocr.base_url') }}/requests/{{ $selectedDocument['id'] }}/pages/1/original"
+                                        alt="원본 이미지"
+                                        class="w-full h-auto"
+                                        onerror="this.parentElement.innerHTML='<div class=\'p-8 text-center text-gray-500\'>이미지를 불러올 수 없습니다</div>'"
+                                    >
+                                </div>
+                            </div>
+
+                            <!-- Visualization Image -->
+                            <div>
+                                <div class="flex items-center justify-between mb-2">
+                                    <h4 class="text-sm font-medium text-gray-700">OCR 분석 결과 (바운딩 박스 표시)</h4>
+                                    <button wire:click="downloadVisualization('{{ $selectedDocument['id'] }}', 1)" class="text-xs text-blue-600 hover:text-blue-800">
+                                        다운로드
+                                    </button>
+                                </div>
+                                <div class="border border-gray-200 rounded-lg overflow-hidden bg-gray-50">
+                                    <img
+                                        src="{{ config('services.ocr.base_url') }}/requests/{{ $selectedDocument['id'] }}/pages/1/visualization"
+                                        alt="시각화 이미지"
+                                        class="w-full h-auto"
+                                        onerror="this.parentElement.innerHTML='<div class=\'p-8 text-center text-gray-500\'>시각화 이미지를 불러올 수 없습니다</div>'"
+                                    >
+                                </div>
                             </div>
                         </div>
                     </div>

@@ -35,4 +35,8 @@ return [
         ],
     ],
 
+    'ocr' => [
+        'base_url' => env('OCR_API_BASE_URL', 'http://localhost:3100'),
+    ],
+
 ];
