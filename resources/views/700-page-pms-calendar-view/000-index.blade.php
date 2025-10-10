@@ -129,10 +129,8 @@
                 @php
                     $isToday = $startDate->isToday();
                     $isCurrentMonth = $startDate->month === $currentMonth;
-                    $dayEvents = collect($projects)->filter(function($project) use ($startDate) {
-                        return \Carbon\Carbon::parse($project['startDate'])->lte($startDate) && 
-                               \Carbon\Carbon::parse($project['endDate'])->gte($startDate);
-                    });
+                    $dateKey = $startDate->format('Y-m-d');
+                    $dayEvents = $calendarEvents[$dateKey] ?? [];
                 @endphp
                 <div class="border-b border-r border-gray-200 h-32 p-2 cursor-pointer transition-all duration-200 hover:scale-105 hover:shadow-md group
                     {{ !$isCurrentMonth ? 'bg-gray-50' : 'bg-white' }}
@@ -142,43 +140,52 @@
                     
                     <!-- Date Number -->
                     <div class="flex justify-between items-center mb-1">
-                        <div class="text-sm font-medium {{ $isToday ? 'text-blue-600 font-bold' : 'text-gray-900' }} 
+                        <div class="text-sm font-medium {{ $isToday ? 'text-blue-600 font-bold' : 'text-gray-900' }}
                                   {{ !$isCurrentMonth ? 'text-gray-400' : '' }}">
                             {{ $startDate->day }}
                         </div>
-                        @if($dayEvents->count() > 0)
+                        @if(count($dayEvents) > 0)
                         <div class="text-xs bg-blue-500 text-white rounded-full w-5 h-5 flex items-center justify-center animate-pulse">
-                            {{ $dayEvents->count() }}
+                            {{ count($dayEvents) }}
                         </div>
                         @endif
                     </div>
 
                     <!-- Events -->
                     <div class="space-y-1">
-                        @foreach($dayEvents->take(3) as $project)
+                        @foreach(array_slice($dayEvents, 0, 3) as $event)
                         <div class="text-xs p-1 rounded truncate cursor-pointer transition-all duration-200 hover:scale-105
-                            @if($project['priority'] === 'high') bg-red-100 text-red-800 border-l-2 border-red-500
-                            @elseif($project['priority'] === 'medium') bg-yellow-100 text-yellow-800 border-l-2 border-yellow-500
-                            @else bg-green-100 text-green-800 border-l-2 border-green-500
+                            @if($event['priority'] === 'urgent') bg-red-100 text-red-800 border-l-2 border-red-600
+                            @elseif($event['priority'] === 'high') bg-orange-100 text-orange-800 border-l-2 border-orange-500
+                            @elseif($event['priority'] === 'medium') bg-blue-100 text-blue-800 border-l-2 border-blue-500
+                            @else bg-gray-100 text-gray-800 border-l-2 border-gray-500
                             @endif"
+                             wire:click="showEventDetail({{ $event['id'] }})"
                              onclick="event.stopPropagation()"
-                             title="{{ $project['name'] }} - {{ $project['description'] }}">
-                            <div class="flex items-center">
-                                @if($project['status'] === 'completed')
-                                    <svg class="w-3 h-3 mr-1 text-green-600" fill="currentColor" viewBox="0 0 20 20">
-                                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
-                                    </svg>
-                                @elseif($project['status'] === 'in_progress')
-                                    <div class="w-2 h-2 mr-1 bg-blue-500 rounded-full animate-pulse"></div>
+                             title="[{{ strtoupper($event['priority']) }}] {{ $event['title'] }} - {{ $event['assignee'] ?? '미할당' }}">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center flex-1 min-w-0">
+                                    @if($event['status'] === 'completed')
+                                        <svg class="w-3 h-3 mr-1 text-green-600 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                                        </svg>
+                                    @elseif($event['status'] === 'in_progress')
+                                        <div class="w-2 h-2 mr-1 bg-blue-500 rounded-full animate-pulse flex-shrink-0"></div>
+                                    @else
+                                        <div class="w-2 h-2 mr-1 bg-gray-400 rounded-full flex-shrink-0"></div>
+                                    @endif
+                                    <span class="truncate">{{ $event['title'] }}</span>
+                                </div>
+                                @if($event['estimated_hours'])
+                                <span class="text-[10px] ml-1 flex-shrink-0">{{ $event['estimated_hours'] }}h</span>
                                 @endif
-                                <span class="truncate">{{ $project['name'] }}</span>
                             </div>
                         </div>
                         @endforeach
-                        
-                        @if($dayEvents->count() > 3)
+
+                        @if(count($dayEvents) > 3)
                         <div class="text-xs text-gray-500 font-medium">
-                            +{{ $dayEvents->count() - 3 }}개 더
+                            +{{ count($dayEvents) - 3 }}개 더
                         </div>
                         @endif
                     </div>
@@ -226,25 +233,28 @@
                     {{ $hour }}:00
                 </div>
                 @for($day = 0; $day < 7; $day++)
+                @php
+                    $currentDay = $weekStart->copy()->addDays($day);
+                    $dateKey = $currentDay->format('Y-m-d');
+                    $dayEvents = $calendarEvents[$dateKey] ?? [];
+                @endphp
                 <div class="border-b border-r border-gray-200 h-16 p-1 hover:bg-gray-50"
-                     wire:click="selectDate('{{ $weekStart->copy()->addDays($day)->format('Y-m-d') }}')">
+                     wire:click="selectDate('{{ $dateKey }}')">
                     <!-- Events for this time slot -->
-                    @foreach($projects as $project)
-                        @php
-                            $currentDay = $weekStart->copy()->addDays($day);
-                            $projectStart = \Carbon\Carbon::parse($project['startDate']);
-                            $projectEnd = \Carbon\Carbon::parse($project['endDate']);
-                        @endphp
-                        @if($projectStart->lte($currentDay) && $projectEnd->gte($currentDay) && $hour === 10)
-                        <div class="text-xs p-1 rounded truncate
-                            @if($project['priority'] === 'high') bg-red-100 text-red-800
-                            @elseif($project['priority'] === 'medium') bg-yellow-100 text-yellow-800
-                            @else bg-green-100 text-green-800
-                            @endif">
-                            {{ $project['name'] }}
+                    @if($hour === 10 && count($dayEvents) > 0)
+                        @foreach(array_slice($dayEvents, 0, 2) as $event)
+                        <div class="text-xs p-1 rounded truncate mb-1 cursor-pointer hover:scale-105 transition-all duration-200
+                            @if($event['priority'] === 'urgent') bg-red-100 text-red-800 border-l-2 border-red-600
+                            @elseif($event['priority'] === 'high') bg-orange-100 text-orange-800 border-l-2 border-orange-500
+                            @elseif($event['priority'] === 'medium') bg-blue-100 text-blue-800 border-l-2 border-blue-500
+                            @else bg-gray-100 text-gray-800 border-l-2 border-gray-500
+                            @endif"
+                             wire:click="showEventDetail({{ $event['id'] }})"
+                             onclick="event.stopPropagation()">
+                            {{ $event['title'] }}
                         </div>
-                        @endif
-                    @endforeach
+                        @endforeach
+                    @endif
                 </div>
                 @endfor
                 @endfor
@@ -260,62 +270,61 @@
             </h3>
             
             @php
-                $selectedProjects = collect($projects)->filter(function($project) {
-                    $selectedCarbon = \Carbon\Carbon::parse($this->selectedDate);
-                    $startDate = \Carbon\Carbon::parse($project['startDate']);
-                    $endDate = \Carbon\Carbon::parse($project['endDate']);
-                    return $startDate->lte($selectedCarbon) && $endDate->gte($selectedCarbon);
-                });
+                $selectedEvents = $calendarEvents[$selectedDate] ?? [];
             @endphp
 
-            @if($selectedProjects->count() > 0)
+            @if(count($selectedEvents) > 0)
             <div class="space-y-3">
-                @foreach($selectedProjects as $project)
+                @foreach($selectedEvents as $event)
                 <div class="border border-gray-200 rounded-lg p-4">
                     <div class="flex justify-between items-start mb-2">
-                        <h4 class="font-medium text-gray-900">{{ $project['name'] }}</h4>
-                        <span class="px-2 py-1 text-xs rounded-full font-medium
-                            @if($project['status'] === 'in_progress') bg-blue-100 text-blue-800
-                            @elseif($project['status'] === 'planning') bg-yellow-100 text-yellow-800
-                            @elseif($project['status'] === 'completed') bg-green-100 text-green-800
-                            @else bg-gray-100 text-gray-800
-                            @endif">
-                            @if($project['status'] === 'in_progress') 진행중
-                            @elseif($project['status'] === 'planning') 계획중
-                            @elseif($project['status'] === 'completed') 완료
-                            @else 대기중
-                            @endif
-                        </span>
-                    </div>
-                    
-                    <p class="text-sm text-gray-600 mb-2">{{ $project['description'] }}</p>
-                    
-                    <div class="flex justify-between items-center text-sm">
-                        <div class="text-gray-600">
-                            {{ $project['startDate'] }} ~ {{ $project['endDate'] }}
-                        </div>
-                        <div class="flex items-center space-x-2">
+                        <h4 class="font-medium text-gray-900">{{ $event['title'] }}</h4>
+                        <div class="flex items-center gap-2">
                             <span class="px-2 py-1 text-xs rounded-full font-medium
-                                @if($project['priority'] === 'high') bg-red-100 text-red-800
-                                @elseif($project['priority'] === 'medium') bg-yellow-100 text-yellow-800
-                                @else bg-green-100 text-green-800
+                                @if($event['priority'] === 'urgent') bg-red-100 text-red-800
+                                @elseif($event['priority'] === 'high') bg-orange-100 text-orange-800
+                                @elseif($event['priority'] === 'medium') bg-blue-100 text-blue-800
+                                @else bg-gray-100 text-gray-800
                                 @endif">
-                                @if($project['priority'] === 'high') 높음
-                                @elseif($project['priority'] === 'medium') 보통
-                                @else 낮음
+                                {{ strtoupper($event['priority']) }}
+                            </span>
+                            <span class="px-2 py-1 text-xs rounded-full font-medium
+                                @if($event['status'] === 'in_progress') bg-blue-100 text-blue-800
+                                @elseif($event['status'] === 'pending') bg-yellow-100 text-yellow-800
+                                @elseif($event['status'] === 'completed') bg-green-100 text-green-800
+                                @else bg-gray-100 text-gray-800
+                                @endif">
+                                @if($event['status'] === 'in_progress') 진행중
+                                @elseif($event['status'] === 'pending') 대기중
+                                @elseif($event['status'] === 'completed') 완료
+                                @else {{ $event['status'] }}
                                 @endif
                             </span>
-                            <span class="text-gray-600">{{ $project['progress'] }}%</span>
                         </div>
                     </div>
-                    
+
+                    <p class="text-sm text-gray-600 mb-2">요청자: {{ $event['requester'] ?? '미정' }}</p>
+                    @if($event['assignee'])
+                    <p class="text-sm text-gray-600 mb-2">담당자: {{ $event['assignee'] }}</p>
+                    @endif
+
+                    <div class="flex justify-between items-center text-sm mt-3">
+                        <div class="text-gray-600">
+                            완료 요청일: {{ $event['date'] }}
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <span class="text-gray-600">예상: {{ $event['estimated_hours'] }}시간</span>
+                            <span class="text-gray-600">진행률: {{ $event['completed_percentage'] }}%</span>
+                        </div>
+                    </div>
+
+                    @if($event['completed_percentage'] > 0)
                     <div class="mt-2">
-                        <div class="flex flex-wrap gap-1">
-                            @foreach($project['team'] as $member)
-                            <span class="px-2 py-1 bg-blue-50 text-blue-700 text-xs rounded-full">{{ $member }}</span>
-                            @endforeach
+                        <div class="w-full bg-gray-200 rounded-full h-2">
+                            <div class="bg-blue-600 h-2 rounded-full" style="width: {{ $event['completed_percentage'] }}%"></div>
                         </div>
                     </div>
+                    @endif
                 </div>
                 @endforeach
             </div>
@@ -347,68 +356,59 @@
                     <div class="space-y-4">
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">제목 *</label>
-                            <input type="text" 
-                                   wire:model="eventForm.title" 
+                            <input type="text"
+                                   wire:model="eventForm.title"
                                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 transition-all duration-200"
-                                   placeholder="일정 제목을 입력하세요">
+                                   placeholder="분석 요청 제목을 입력하세요">
                             @error('eventForm.title') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
                         </div>
-                        
+
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">날짜 *</label>
-                            <input type="date" 
-                                   wire:model="eventForm.date" 
-                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 transition-all duration-200">
-                            @error('eventForm.date') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
+                            <label class="block text-sm font-medium text-gray-700 mb-2">상세 설명</label>
+                            <textarea wire:model="eventForm.description"
+                                      rows="4"
+                                      class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 transition-all duration-200"
+                                      placeholder="요청하실 분석 내용을 상세히 작성해주세요"></textarea>
+                            @error('eventForm.description') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
                         </div>
-                        
+
                         <div class="grid grid-cols-2 gap-4">
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-2">시간 *</label>
-                                <select wire:model="eventForm.time" 
-                                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 transition-all duration-200">
-                                    @for($hour = 9; $hour <= 18; $hour++)
-                                        <option value="{{ sprintf('%02d:00', $hour) }}">{{ $hour }}:00</option>
-                                        <option value="{{ sprintf('%02d:30', $hour) }}">{{ $hour }}:30</option>
-                                    @endfor
-                                </select>
-                                @error('eventForm.time') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
-                            </div>
-                            
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-2">소요시간 (시간)</label>
-                                <input type="number" 
-                                       wire:model="eventForm.duration" 
-                                       step="0.5" 
-                                       min="0.5" 
-                                       max="8"
+                                <label class="block text-sm font-medium text-gray-700 mb-2">시작일</label>
+                                <input type="date"
+                                       wire:model="eventForm.start_date"
                                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 transition-all duration-200">
-                                @error('eventForm.duration') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
+                                @error('eventForm.start_date') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">종료일</label>
+                                <input type="date"
+                                       wire:model="eventForm.end_date"
+                                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 transition-all duration-200">
+                                @error('eventForm.end_date') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
                             </div>
                         </div>
-                        
-                        <div class="grid grid-cols-2 gap-4">
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-2">유형</label>
-                                <select wire:model="eventForm.type" 
-                                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 transition-all duration-200">
-                                    <option value="meeting">회의</option>
-                                    <option value="task">작업</option>
-                                    <option value="review">검토</option>
-                                    <option value="planning">계획</option>
-                                    <option value="other">기타</option>
-                                </select>
-                            </div>
-                            
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-2">우선순위</label>
-                                <select wire:model="eventForm.priority" 
-                                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 transition-all duration-200">
-                                    <option value="low">낮음</option>
-                                    <option value="medium">보통</option>
-                                    <option value="high">높음</option>
-                                </select>
-                            </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">예상 소요시간 (시간)</label>
+                            <input type="number"
+                                   wire:model="eventForm.estimated_hours"
+                                   min="1"
+                                   max="1000"
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 transition-all duration-200">
+                            @error('eventForm.estimated_hours') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">우선순위 *</label>
+                            <select wire:model="eventForm.priority"
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 transition-all duration-200">
+                                <option value="low">낮음 (14일 이내)</option>
+                                <option value="medium">보통 (7일 이내)</option>
+                                <option value="high">높음 (3일 이내)</option>
+                                <option value="urgent">긴급 (1일 이내)</option>
+                            </select>
                         </div>
                     </div>
                     
@@ -428,9 +428,218 @@
         </div>
         @endif
 
+        <!-- Event Detail Modal -->
+        @if($showEventDetailModal)
+        @php
+            $selectedEvent = $this->getSelectedEvent();
+        @endphp
+        @if($selectedEvent)
+        <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 animate-fade-in">
+            <div class="bg-white rounded-lg p-6 w-full max-w-2xl max-h-screen overflow-y-auto transform transition-all duration-300 scale-100">
+                <div class="flex justify-between items-start mb-4">
+                    <h3 class="text-xl font-bold text-gray-900">
+                        @if($editMode)
+                        일정 수정
+                        @else
+                        {{ $selectedEvent['title'] }}
+                        @endif
+                    </h3>
+                    <button wire:click="closeEventDetailModal" class="text-gray-400 hover:text-gray-600">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
+
+                @if($editMode)
+                <!-- Edit Form -->
+                <form wire:submit.prevent="updateEvent">
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">제목 *</label>
+                            <input type="text"
+                                   wire:model="editForm.title"
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            @error('editForm.title') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">상세 설명</label>
+                            <textarea wire:model="editForm.description"
+                                      rows="4"
+                                      class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+                            @error('editForm.description') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">시작일</label>
+                                <input type="date"
+                                       wire:model="editForm.start_date"
+                                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                @error('editForm.start_date') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">종료일</label>
+                                <input type="date"
+                                       wire:model="editForm.end_date"
+                                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                @error('editForm.end_date') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">우선순위 *</label>
+                                <select wire:model="editForm.priority"
+                                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                    <option value="low">낮음</option>
+                                    <option value="medium">보통</option>
+                                    <option value="high">높음</option>
+                                    <option value="urgent">긴급</option>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">상태 *</label>
+                                <select wire:model="editForm.status"
+                                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                    <option value="pending">대기중</option>
+                                    <option value="in_progress">진행중</option>
+                                    <option value="completed">완료</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">예상 소요시간 (시간)</label>
+                                <input type="number"
+                                       wire:model="editForm.estimated_hours"
+                                       min="1"
+                                       max="1000"
+                                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                @error('editForm.estimated_hours') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">진행률 (%)</label>
+                                <input type="number"
+                                       wire:model="editForm.completed_percentage"
+                                       min="0"
+                                       max="100"
+                                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                @error('editForm.completed_percentage') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-6 flex justify-end space-x-3">
+                        <button type="button"
+                                wire:click="cancelEdit"
+                                class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors">
+                            취소
+                        </button>
+                        <button type="submit"
+                                class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                            저장
+                        </button>
+                    </div>
+                </form>
+                @else
+                <!-- View Mode -->
+                <div class="space-y-4">
+                    <!-- Status and Priority -->
+                    <div class="flex items-center gap-2">
+                        <span class="px-3 py-1 text-sm rounded-full font-medium
+                            @if($selectedEvent['priority'] === 'urgent') bg-red-100 text-red-800
+                            @elseif($selectedEvent['priority'] === 'high') bg-orange-100 text-orange-800
+                            @elseif($selectedEvent['priority'] === 'medium') bg-blue-100 text-blue-800
+                            @else bg-gray-100 text-gray-800
+                            @endif">
+                            우선순위: {{ strtoupper($selectedEvent['priority']) }}
+                        </span>
+                        <span class="px-3 py-1 text-sm rounded-full font-medium
+                            @if($selectedEvent['status'] === 'in_progress') bg-blue-100 text-blue-800
+                            @elseif($selectedEvent['status'] === 'pending') bg-yellow-100 text-yellow-800
+                            @elseif($selectedEvent['status'] === 'completed') bg-green-100 text-green-800
+                            @else bg-gray-100 text-gray-800
+                            @endif">
+                            상태:
+                            @if($selectedEvent['status'] === 'in_progress') 진행중
+                            @elseif($selectedEvent['status'] === 'pending') 대기중
+                            @elseif($selectedEvent['status'] === 'completed') 완료
+                            @else {{ $selectedEvent['status'] }}
+                            @endif
+                        </span>
+                    </div>
+
+                    <!-- Description -->
+                    @if($selectedEvent['description'])
+                    <div>
+                        <h4 class="font-medium text-gray-900 mb-2">상세 설명</h4>
+                        <p class="text-gray-600 whitespace-pre-wrap">{{ $selectedEvent['description'] }}</p>
+                    </div>
+                    @endif
+
+                    <!-- Info Grid -->
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <p class="text-sm text-gray-500">요청자</p>
+                            <p class="font-medium text-gray-900">{{ $selectedEvent['requester'] ?? '미정' }}</p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-500">담당자</p>
+                            <p class="font-medium text-gray-900">{{ $selectedEvent['assignee'] ?? '미할당' }}</p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-500">시작일</p>
+                            <p class="font-medium text-gray-900">{{ $selectedEvent['start_date'] ?? '-' }}</p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-500">종료일</p>
+                            <p class="font-medium text-gray-900">{{ $selectedEvent['end_date'] ?? '-' }}</p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-500">예상 소요시간</p>
+                            <p class="font-medium text-gray-900">{{ $selectedEvent['estimated_hours'] ? $selectedEvent['estimated_hours'] . '시간' : '-' }}</p>
+                        </div>
+                    </div>
+
+                    <!-- Progress Bar -->
+                    @if($selectedEvent['completed_percentage'] > 0)
+                    <div>
+                        <div class="flex justify-between items-center mb-2">
+                            <p class="text-sm font-medium text-gray-700">진행률</p>
+                            <p class="text-sm font-bold text-blue-600">{{ $selectedEvent['completed_percentage'] }}%</p>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-3">
+                            <div class="bg-blue-600 h-3 rounded-full transition-all duration-300" style="width: {{ $selectedEvent['completed_percentage'] }}%"></div>
+                        </div>
+                    </div>
+                    @endif
+                </div>
+
+                <div class="mt-6 flex justify-between">
+                    <button wire:click="enableEditMode"
+                            class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                        수정
+                    </button>
+                    <button wire:click="closeEventDetailModal"
+                            class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors">
+                        닫기
+                    </button>
+                </div>
+                @endif
+            </div>
+        </div>
+        @endif
+        @endif
+
         <!-- Flash Message -->
         @if (session()->has('message'))
-        <div x-data="{ show: true }" x-show="show" x-transition x-init="setTimeout(() => show = false, 3000)" 
+        <div x-data="{ show: true }" x-show="show" x-transition x-init="setTimeout(() => show = false, 3000)"
              class="fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50 transform transition-all duration-300">
             <div class="flex items-center">
                 <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">

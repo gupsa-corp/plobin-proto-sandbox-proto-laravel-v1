@@ -210,6 +210,6 @@ class Livewire extends Component
     public function render()
     {
         return view('700-page-pms-project-list/000-index')
-            ->layout('layouts.app');
+            ->layout('300-layout-common.000-app');
     }
 }

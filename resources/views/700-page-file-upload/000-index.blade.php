@@ -1,4 +1,4 @@
-<x-layouts.app>
+<x-300-layout-common.000-app>
     <x-slot:title>파일 업로드</x-slot:title>
     
     {{-- 파일 업로드 템플릿 --}}
@@ -136,4 +136,4 @@
 
     @include('700-page-file-upload.400-upload-scripts')
     </div>
-</x-layouts.app>
+</x-300-layout-common.000-app>

@@ -17,6 +17,6 @@ class SimpleTest extends Component
 
     public function render()
     {
-        return view('simple-test')->layout('layouts.app');
+        return view('simple-test')->layout('300-layout-common.000-app');
     }
 }

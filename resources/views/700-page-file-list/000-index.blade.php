@@ -1,4 +1,4 @@
-<x-layouts.app>
+<x-300-layout-common.000-app>
     <x-slot:title>파일 목록</x-slot:title>
     
     {{-- 업로드된 파일 목록 관리 --}}
@@ -203,4 +203,4 @@
     @include('700-page-file-list.300-bulk-analysis-modal')
     @include('700-page-file-list.400-file-list-scripts')
     </div>
-</x-layouts.app>
+</x-300-layout-common.000-app>
