@@ -10,6 +10,7 @@ class Service
     public function execute($documentId): array
     {
         try {
+            // 1단계: 요청 메타데이터 조회
             $response = Http::get(config('services.ocr.base_url') . "/requests/{$documentId}");
 
             if (!$response->successful()) {
@@ -26,11 +27,47 @@ class Service
             $data = $response->json();
             $pages = $data['pages'] ?? [];
 
-            // 모든 페이지의 텍스트 블록 수집
+            // 2단계: 각 페이지별 블록 데이터 조회
+            $pagesWithBlocks = [];
             $allBlocks = [];
+
             foreach ($pages as $page) {
-                if (isset($page['blocks'])) {
-                    $allBlocks = array_merge($allBlocks, $page['blocks']);
+                $pageNumber = $page['page_number'];
+
+                try {
+                    // 페이지별 상세 데이터 조회 (블록 포함)
+                    $pageResponse = Http::get(config('services.ocr.base_url') . "/requests/{$documentId}/pages/{$pageNumber}");
+
+                    if ($pageResponse->successful()) {
+                        $pageData = $pageResponse->json();
+
+                        // 블록 데이터에 이미지 URL 추가
+                        $blocksWithImages = [];
+                        if (isset($pageData['blocks'])) {
+                            foreach ($pageData['blocks'] as $blockIndex => $block) {
+                                $blockId = $block['block_id'] ?? $blockIndex;
+                                $block['image_url'] = config('services.ocr.base_url') . "/requests/{$documentId}/pages/{$pageNumber}/blocks/{$blockId}/image";
+                                $blocksWithImages[] = $block;
+                                $allBlocks[] = $block;
+                            }
+                        }
+
+                        // 페이지 정보에 블록 추가 (이미지 URL 포함)
+                        $pagesWithBlocks[] = [
+                            'page_number' => $pageNumber,
+                            'total_blocks' => $page['total_blocks'] ?? count($blocksWithImages),
+                            'average_confidence' => $page['average_confidence'] ?? 0,
+                            'processing_time' => $page['processing_time'] ?? 0,
+                            'visualization_url' => config('services.ocr.base_url') . "/requests/{$documentId}/pages/{$pageNumber}/visualization",
+                            'blocks' => $blocksWithImages
+                        ];
+                    } else {
+                        // 페이지 상세 조회 실패 시 기본 페이지 정보만 사용
+                        $pagesWithBlocks[] = $page;
+                    }
+                } catch (\Exception $e) {
+                    Log::warning("페이지 {$pageNumber} 블록 조회 실패: " . $e->getMessage());
+                    $pagesWithBlocks[] = $page;
                 }
             }
 
@@ -45,12 +82,16 @@ class Service
             }, $allBlocks);
             $avgConfidence = count($confidences) > 0 ? array_sum($confidences) / count($confidences) : 0;
 
+            // OCR 원본 데이터에 블록 정보 추가
+            $data['pages'] = $pagesWithBlocks;
+
             return [
                 'summary' => $this->generateSummary($extractedTexts),
                 'keywords' => $this->extractKeywords($extractedTexts),
                 'categories' => $this->classifyDocument($data),
                 'extractedData' => $this->extractStructuredData($allBlocks),
-                'recommendations' => []
+                'recommendations' => [],
+                'ocrRawData' => $data  // OCR API 원본 응답 (블록 포함)
             ];
 
         } catch (\Exception $e) {

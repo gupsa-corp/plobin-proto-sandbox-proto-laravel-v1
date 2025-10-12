@@ -2,41 +2,33 @@
 
 namespace App\Services\Rfx\DocumentAnalysis\Regenerate;
 
-use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 
 class Service
 {
-    public function execute($documentId): array
+    public function execute($documentId, $reason = null): array
     {
         try {
-            // OCR 서비스에 재분석 요청
-            $response = Http::post(config('services.ocr.base_url') . "/requests/{$documentId}/reanalyze");
+            // Queue Job 디스패치 (비동기 처리)
+            \App\Jobs\Rfx\DocumentAnalysis\Reanalyze\Jobs::dispatch(
+                $documentId,
+                Auth::id(),
+                $reason
+            );
 
-            if (!$response->successful()) {
-                Log::error('OCR API 재분석 요청 실패', [
-                    'documentId' => $documentId,
-                    'status' => $response->status(),
-                    'response' => $response->body()
-                ]);
-
-                return [
-                    'success' => false,
-                    'message' => 'OCR 서비스 재분석 요청에 실패했습니다.'
-                ];
-            }
-
-            Log::info('OCR API 재분석 요청 성공', [
-                'documentId' => $documentId
+            Log::info('재분석 Job 디스패치 완료', [
+                'documentId' => $documentId,
+                'userId' => Auth::id()
             ]);
 
             return [
                 'success' => true,
-                'message' => '문서 재분석을 시작했습니다. 분석이 완료되면 결과가 업데이트됩니다.'
+                'message' => '문서 재분석 요청이 접수되었습니다. 백그라운드에서 처리 중입니다.'
             ];
 
         } catch (\Exception $e) {
-            Log::error('OCR API 재분석 요청 실패 (Exception)', [
+            Log::error('재분석 Job 디스패치 실패', [
                 'documentId' => $documentId,
                 'error' => $e->getMessage()
             ]);
