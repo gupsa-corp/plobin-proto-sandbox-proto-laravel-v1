@@ -199,8 +199,8 @@
                         <a href="/rfx/analysis" class="block text-sm text-blue-600 hover:text-blue-800">
                             📊 분석 결과 확인
                         </a>
-                        <a href="/rfx/requests" class="block text-sm text-blue-600 hover:text-blue-800">
-                            📋 분석 요청 관리
+                        <a href="/rfx/ai-analysis" class="block text-sm text-blue-600 hover:text-blue-800">
+                            🤖 AI 분석
                         </a>
                     </div>
                 </div>

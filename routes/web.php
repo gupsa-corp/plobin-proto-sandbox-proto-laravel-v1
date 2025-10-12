@@ -55,16 +55,6 @@ Route::get('/rfx/analysis/{documentId}', \App\Livewire\Rfx\DocumentAnalysis\Live
 Route::get('/rfx/documents/{documentId}/blocks', \App\Livewire\Rfx\DocumentBlocks\Livewire::class)->name('rfx.documents.blocks');
 Route::get('/rfx/documents/{documentId}/sections', \App\Livewire\Rfx\DocumentSections\Livewire::class)->name('rfx.documents.sections');
 
-// RFX Navigation Test
-Route::get('/test-rfx-nav', function () {
-    return view('test-rfx-navigation');
-})->name('test.rfx.nav');
-
-// RFX Forms Test (simulating rfx/forms path)
-Route::get('/rfx/forms-test', function () {
-    return view('test-rfx-forms');
-})->name('test.rfx.forms');
-
 Route::get('/test', function () {
     return 'Test route works!';
 });

@@ -21,8 +21,6 @@ Route::get('/rfx/dashboard', \App\Livewire\Rfx\Dashboard\Livewire::class)->name(
 Route::get('/rfx/upload', \App\Livewire\Rfx\FileUpload\Livewire::class)->name('rfx.upload');
 Route::get('/rfx/files', \App\Livewire\Rfx\FileList\Livewire::class)->name('rfx.files');
 Route::get('/rfx/analysis', \App\Livewire\Rfx\DocumentAnalysis\Livewire::class)->name('rfx.analysis');
-Route::get('/rfx/requests', \App\Livewire\Rfx\AnalysisRequests\Livewire::class)->name('rfx.requests');
-Route::get('/rfx/forms', \App\Livewire\Rfx\FormExecution\Livewire::class)->name('rfx.forms');
 
 // Test Livewire Components
 Route::get('/simple-test', \App\Livewire\SimpleTest::class);

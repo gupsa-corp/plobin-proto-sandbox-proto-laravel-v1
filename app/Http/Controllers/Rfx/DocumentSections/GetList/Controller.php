@@ -3,7 +3,9 @@
 namespace App\Http\Controllers\Rfx\DocumentSections\GetList;
 
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request as HttpRequest;
 use App\Services\Rfx\DocumentSections\GetList\Service;
+use App\Http\Controllers\Rfx\DocumentSections\GetList\Response;
 
 /**
  * @OA\Get(
@@ -39,12 +41,10 @@ use App\Services\Rfx\DocumentSections\GetList\Service;
  */
 class Controller
 {
-    public function __invoke(Request $request, int $id): JsonResponse
+    public function __invoke(HttpRequest $request, string $id): JsonResponse
     {
-        $validated = $request->validated();
-
         $service = new Service();
-        $result = $service->execute($id, $validated['page'] ?? 1);
+        $result = $service->execute($id, $request->input('page', 1));
 
         return response()->json(
             new Response($result),
