@@ -159,6 +159,9 @@ class Livewire extends Component
     {
         $this->selectedEventId = $eventId;
         $this->showEventDetailModal = true;
+
+        // 즉시 수정 모드로 진입
+        $this->enableEditMode();
     }
 
     public function closeEventDetailModal()
@@ -242,15 +245,14 @@ class Livewire extends Component
             'editForm.completed_percentage.max' => '진행률은 100% 이하여야 합니다.'
         ]);
 
-        // 분석 요청 수정 서비스 호출
-        $updateService = new \App\Services\Pms\UpdateAnalysisRequest\Service();
+        // 프로젝트 수정 서비스 호출
+        $updateService = new \App\Services\Pms\UpdateProject\Service();
         $result = $updateService->execute([
             'id' => $this->selectedEventId,
             'title' => $this->editForm['title'],
             'description' => $this->editForm['description'],
             'start_date' => $this->editForm['start_date'],
             'end_date' => $this->editForm['end_date'],
-            'estimated_hours' => $this->editForm['estimated_hours'],
             'priority' => $this->editForm['priority'],
             'status' => $this->editForm['status'],
             'completed_percentage' => $this->editForm['completed_percentage']
@@ -295,11 +297,40 @@ class Livewire extends Component
     {
         $grouped = [];
         foreach ($events as $event) {
-            $date = $event['date'];
-            if (!isset($grouped[$date])) {
-                $grouped[$date] = [];
+            // start_date와 end_date가 모두 있으면 기간 내 모든 날짜에 이벤트 추가
+            $startDate = $event['start_date'] ?? $event['date'];
+            $endDate = $event['end_date'] ?? $event['date'];
+
+            if ($startDate && $endDate) {
+                $current = \Carbon\Carbon::parse($startDate);
+                $end = \Carbon\Carbon::parse($endDate);
+
+                // 시작일부터 종료일까지 모든 날짜에 이벤트 추가
+                while ($current <= $end) {
+                    $dateKey = $current->format('Y-m-d');
+                    if (!isset($grouped[$dateKey])) {
+                        $grouped[$dateKey] = [];
+                    }
+
+                    // 이벤트에 현재 날짜 정보 추가
+                    $eventWithDate = array_merge($event, [
+                        'current_date' => $dateKey,
+                        'is_start' => $current->format('Y-m-d') === $startDate,
+                        'is_end' => $current->format('Y-m-d') === $endDate,
+                        'is_multi_day' => $startDate !== $endDate,
+                    ]);
+
+                    $grouped[$dateKey][] = $eventWithDate;
+                    $current->addDay();
+                }
+            } else {
+                // 날짜 정보가 없으면 기본 날짜에만 추가
+                $date = $event['date'];
+                if (!isset($grouped[$date])) {
+                    $grouped[$date] = [];
+                }
+                $grouped[$date][] = $event;
             }
-            $grouped[$date][] = $event;
         }
         return $grouped;
     }

@@ -160,8 +160,7 @@
                             @elseif($event['priority'] === 'medium') bg-blue-100 text-blue-800 border-l-2 border-blue-500
                             @else bg-gray-100 text-gray-800 border-l-2 border-gray-500
                             @endif"
-                             wire:click="showEventDetail({{ $event['id'] }})"
-                             onclick="event.stopPropagation()"
+                             wire:click.stop="showEventDetail({{ $event['id'] }})"
                              title="[{{ strtoupper($event['priority']) }}] {{ $event['title'] }} - {{ $event['assignee'] ?? '미할당' }}">
                             <div class="flex items-center justify-between">
                                 <div class="flex items-center flex-1 min-w-0">
