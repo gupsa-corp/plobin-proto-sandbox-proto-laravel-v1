@@ -11,6 +11,7 @@ use App\Services\Rfx\DocumentAnalysis\DownloadOriginal\Service as DownloadOrigin
 use App\Services\Rfx\DocumentAnalysis\DownloadVisualization\Service as DownloadVisualizationService;
 use App\Services\Rfx\AnalysisSnapshot\GetSnapshots\Service as GetSnapshotsService;
 use App\Services\Rfx\AnalysisSnapshot\GetSnapshotDetail\Service as GetSnapshotDetailService;
+use App\Services\Rfx\AiAnalysis\CreateRequest\Service as CreateAiAnalysisService;
 
 class Livewire extends Component
 {
@@ -107,6 +108,20 @@ class Livewire extends Component
         }
     }
 
+    public function generateAiAnalysis($documentId)
+    {
+        $service = new CreateAiAnalysisService();
+        $result = $service->execute($documentId);
+
+        if ($result['success']) {
+            session()->flash('message', $result['message']);
+            // AI 분석 페이지로 리다이렉트
+            return redirect()->route('rfx.ai-analysis');
+        } else {
+            session()->flash('error', $result['message']);
+        }
+    }
+
     public function exportAnalysis($documentId, $format)
     {
         $service = new ExportService();
@@ -141,6 +156,7 @@ class Livewire extends Component
 
     public function render()
     {
-        return view('700-page-rfx-document-analysis/000-index');
+        return view('700-page-rfx-document-analysis/000-index')
+            ->layout('300-layout-common/000-app');
     }
 }

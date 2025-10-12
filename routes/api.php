@@ -24,3 +24,12 @@ Route::get('/rfx/file-download/{file_id}', \App\Http\Controllers\Rfx\FileDownloa
 Route::get('/pms/dashboard', \App\Http\Controllers\Pms\Dashboard\Controller::class)->name('api.pms.dashboard');
 Route::get('/pms/projects', \App\Http\Controllers\Pms\Projects\Controller::class)->name('api.pms.projects');
 Route::get('/pms/kanban', \App\Http\Controllers\Pms\Kanban\Controller::class)->name('api.pms.kanban');
+
+// RFX Document Blocks API Routes
+Route::get('/rfx/documents/{id}/blocks', \App\Http\Controllers\Rfx\DocumentBlocks\GetList\Controller::class)->name('api.rfx.documents.blocks.list');
+Route::get('/rfx/documents/{id}/blocks/{blockId}', \App\Http\Controllers\Rfx\DocumentBlocks\GetDetail\Controller::class)->name('api.rfx.documents.blocks.detail');
+Route::put('/rfx/documents/{id}/blocks/{blockId}', \App\Http\Controllers\Rfx\DocumentBlocks\Update\Controller::class)->name('api.rfx.documents.blocks.update');
+
+// RFX Document Sections API Routes
+Route::get('/rfx/documents/{id}/sections', \App\Http\Controllers\Rfx\DocumentSections\GetList\Controller::class)->name('api.rfx.documents.sections.list');
+Route::get('/rfx/documents/{id}/sections/{sectionId}', \App\Http\Controllers\Rfx\DocumentSections\GetDetail\Controller::class)->name('api.rfx.documents.sections.detail');
