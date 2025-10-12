@@ -50,6 +50,8 @@ class Service
             return Response::success([
                 'id' => $uploadedFile->id,
                 'name' => $uploadedFile->original_name,
+                'stored_name' => $uploadedFile->stored_name,
+                'file_path' => $uploadedFile->file_path,
                 'size' => $uploadedFile->formatted_file_size,
                 'type' => $fileExtension,
                 'uploadedAt' => $uploadedFile->created_at->format('Y-m-d H:i:s'),

@@ -10,14 +10,15 @@ use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use romanzipp\QueueMonitor\Traits\IsMonitored;
 
 class Jobs implements ShouldQueue
 {
-    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels, IsMonitored;
 
     public $requestId;
     public $ocrRequestId;
-    public $timeout = 300; // 5분
+    public $timeout = 600; // 10분
 
     /**
      * Create a new job instance.

@@ -12,10 +12,11 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Log;
 use App\Services\Rfx\OcrAnalysis\ProcessWithOntology\Service as OcrOntologyService;
+use romanzipp\QueueMonitor\Traits\IsMonitored;
 
 class Jobs implements ShouldQueue
 {
-    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels, IsMonitored;
 
     protected int $requestId;
     protected string $fileId;

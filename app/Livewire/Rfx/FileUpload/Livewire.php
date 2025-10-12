@@ -38,15 +38,36 @@ class Livewire extends Component
             'files.*' => 'required|file|mimes:jpg,jpeg,png,pdf|max:10240',
         ]);
 
-        $service = new ProcessOcrRequestService();
+        $uploadService = new Service();
+        $ocrService = new ProcessOcrRequestService();
 
         foreach ($this->files as $index => $file) {
             $this->uploadProgress[$index] = 0;
 
-            $result = $service->execute(['file' => $file]);
+            // 1단계: 파일을 디스크에 저장
+            $uploadResult = $uploadService->execute(['file' => $file]);
 
-            if ($result['success']) {
-                $this->uploadProgress[$index] = 100;
+            if (!$uploadResult['success']) {
+                session()->flash('error', '파일 업로드 실패: ' . $uploadResult['message']);
+                continue;
+            }
+
+            $this->uploadProgress[$index] = 50;
+
+            // 2단계: 저장된 파일 경로로 OCR 처리 요청
+            // Storage 퍼사드를 사용해 실제 경로 가져오기
+            $storedName = $uploadResult['data']['stored_name'] ?? '';
+
+            if ($storedName) {
+                $filePath = \Illuminate\Support\Facades\Storage::disk('plobin_uploads')->path($storedName);
+
+                if (file_exists($filePath)) {
+                    $result = $ocrService->execute(['file_path' => $filePath]);
+
+                    if ($result['success']) {
+                        $this->uploadProgress[$index] = 100;
+                    }
+                }
             }
         }
 

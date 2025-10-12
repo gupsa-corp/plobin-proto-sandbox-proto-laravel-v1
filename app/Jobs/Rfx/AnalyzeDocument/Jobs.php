@@ -10,12 +10,13 @@ use Illuminate\Queue\SerializesModels;
 use App\Models\Plobin\UploadedFile;
 use App\Models\Plobin\DocumentAnalysis;
 use Illuminate\Support\Facades\Log;
+use romanzipp\QueueMonitor\Traits\IsMonitored;
 
 class Jobs implements ShouldQueue
 {
-    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels, IsMonitored;
 
-    public $timeout = 300; // 5분 타임아웃
+    public $timeout = 600; // 10분 타임아웃
     public $tries = 3; // 3번 재시도
 
     protected $fileId;

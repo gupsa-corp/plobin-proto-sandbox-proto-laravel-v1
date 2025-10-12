@@ -6,6 +6,9 @@ Route::get('/', function () {
     return view('700-page-dashboard/000-index');
 })->name('dashboard');
 
+// Queue Monitor Routes
+// Route::queueMonitor();
+
 // PMS Test Route - 실제 작동 확인용
 Route::get('/pms/test', function() {
     return view('pms-test');
