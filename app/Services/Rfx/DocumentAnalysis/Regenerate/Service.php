@@ -2,44 +2,49 @@
 
 namespace App\Services\Rfx\DocumentAnalysis\Regenerate;
 
-use App\Models\Plobin\DocumentAnalysis;
-use App\Models\Plobin\UploadedFile;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 
 class Service
 {
     public function execute($documentId): array
     {
-        $file = UploadedFile::find($documentId);
-        
-        if (!$file) {
+        try {
+            // OCR 서비스에 재분석 요청
+            $response = Http::post(config('services.ocr.base_url') . "/requests/{$documentId}/reanalyze");
+
+            if (!$response->successful()) {
+                Log::error('OCR API 재분석 요청 실패', [
+                    'documentId' => $documentId,
+                    'status' => $response->status(),
+                    'response' => $response->body()
+                ]);
+
+                return [
+                    'success' => false,
+                    'message' => 'OCR 서비스 재분석 요청에 실패했습니다.'
+                ];
+            }
+
+            Log::info('OCR API 재분석 요청 성공', [
+                'documentId' => $documentId
+            ]);
+
+            return [
+                'success' => true,
+                'message' => '문서 재분석을 시작했습니다. 분석이 완료되면 결과가 업데이트됩니다.'
+            ];
+
+        } catch (\Exception $e) {
+            Log::error('OCR API 재분석 요청 실패 (Exception)', [
+                'documentId' => $documentId,
+                'error' => $e->getMessage()
+            ]);
+
             return [
                 'success' => false,
-                'message' => '파일을 찾을 수 없습니다.'
+                'message' => '재분석 요청 중 오류가 발생했습니다: ' . $e->getMessage()
             ];
         }
-
-        // 기존 분석 결과 상태를 analyzing으로 변경
-        DocumentAnalysis::updateOrCreate(
-            ['file_id' => $documentId],
-            [
-                'status' => 'analyzing',
-                'analyzed_at' => now(),
-                'summary' => null,
-                'keywords' => null,
-                'categories' => null,
-                'confidence_score' => null,
-                'extracted_data' => null,
-                'recommendations' => null,
-                'error_message' => null
-            ]
-        );
-
-        // 파일 상태도 업데이트
-        $file->update(['status' => 'analyzing']);
-
-        return [
-            'success' => true,
-            'message' => '문서 분석을 다시 시작했습니다.'
-        ];
     }
 }

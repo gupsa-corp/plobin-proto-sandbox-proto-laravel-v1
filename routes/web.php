@@ -45,6 +45,9 @@ Route::get('/rfx/ai-analysis/{id}', function ($id) {
     ]);
 })->name('rfx.ai-analysis.detail');
 
+// RFX Document Analysis Detail Page (Livewire)
+Route::get('/rfx/analysis/{documentId}', \App\Livewire\Rfx\DocumentAnalysis\Livewire::class)->name('rfx.analysis.detail');
+
 // RFX Navigation Test
 Route::get('/test-rfx-nav', function () {
     return view('test-rfx-navigation');

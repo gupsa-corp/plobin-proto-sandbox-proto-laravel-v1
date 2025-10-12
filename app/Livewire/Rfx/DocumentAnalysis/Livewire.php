@@ -18,10 +18,17 @@ class Livewire extends Component
     public $search = '';
     public $statusFilter = '';
     public $dateFilter = '';
+    public $documentId = null;
 
-    public function mount()
+    public function mount($documentId = null)
     {
+        $this->documentId = $documentId;
         $this->loadDocuments();
+
+        // URL에서 documentId가 전달된 경우 해당 문서 자동 선택
+        if ($this->documentId) {
+            $this->selectDocument($this->documentId);
+        }
     }
 
     public function updatedSearch()
@@ -44,16 +51,26 @@ class Livewire extends Component
         $service = new GetResultService();
         $this->selectedDocument = collect($this->documents)->firstWhere('id', $documentId);
         $this->analysisResult = $service->execute($documentId);
+
+        // URL 업데이트 (브라우저 히스토리에 추가)
+        $this->js("window.history.pushState({}, '', '/rfx/analysis/{$documentId}')");
     }
 
     public function regenerateAnalysis($documentId)
     {
         $service = new RegenerateService();
         $result = $service->execute($documentId);
-        
+
         if ($result['success']) {
-            session()->flash('message', '분석을 다시 시작했습니다.');
+            session()->flash('message', $result['message']);
             $this->loadDocuments();
+
+            // 선택된 문서 재로드
+            if ($this->selectedDocument && $this->selectedDocument['id'] === $documentId) {
+                $this->selectDocument($documentId);
+            }
+        } else {
+            session()->flash('error', $result['message']);
         }
     }
 
