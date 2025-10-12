@@ -2,7 +2,7 @@
 
 namespace App\Services\Pms\ProjectUpdate;
 
-use App\Models\Plobin\Project;
+use App\Models\Pms\Project;
 
 /**
  * PMS 프로젝트 수정 서비스
@@ -15,19 +15,19 @@ class Service
             $project = Project::findOrFail($projectId);
             
             $project->update([
-                'name' => $data['name'],
+                'title' => $data['name'],
                 'description' => $data['description'],
                 'status' => $data['status'],
                 'priority' => $data['priority'],
                 'progress' => $data['progress'],
                 'start_date' => $data['start_date'],
                 'end_date' => $data['end_date'],
-                'team' => $data['team'] ?? []
+                'assignee' => $data['assignee'] ?? null
             ]);
 
             return [
                 'success' => true,
-                'message' => "프로젝트 '{$project->name}'이 성공적으로 수정되었습니다.",
+                'message' => "프로젝트 '{$project->title}'이 성공적으로 수정되었습니다.",
                 'data' => [
                     'project_id' => $project->id
                 ]
