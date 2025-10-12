@@ -21,24 +21,37 @@ class Livewire extends Component
 
     public function createProject($projectData)
     {
-        // TODO: 프로젝트 생성 서비스 호출
-        // Service를 통해 생성 로직 구현 필요
+        $service = new \App\Services\Pms\ProjectCreate\Service();
 
-        return [
-            'success' => true,
-            'message' => '프로젝트가 생성되었습니다.'
+        $params = [
+            'title' => $projectData['name'] ?? '',
+            'description' => $projectData['description'] ?? '',
+            'start_date' => $projectData['startDate'] ?? null,
+            'end_date' => $projectData['endDate'] ?? null,
+            'priority' => $projectData['priority'] ?? 'medium',
+            'status' => $projectData['status'] ?? 'planning',
+            'completed_percentage' => $projectData['progress'] ?? 0,
         ];
+
+        return $service->execute($params);
     }
 
     public function updateProject($projectId, $projectData)
     {
-        // TODO: 프로젝트 업데이트 서비스 호출
-        // Service를 통해 업데이트 로직 구현 필요
+        $service = new \App\Services\Pms\UpdateProject\Service();
 
-        return [
-            'success' => true,
-            'message' => '프로젝트가 업데이트되었습니다.'
+        $params = [
+            'id' => $projectId,
+            'title' => $projectData['name'] ?? '',
+            'description' => $projectData['description'] ?? '',
+            'start_date' => $projectData['startDate'] ?? null,
+            'end_date' => $projectData['endDate'] ?? null,
+            'priority' => $projectData['priority'] ?? 'medium',
+            'status' => $projectData['status'] ?? 'planning',
+            'completed_percentage' => $projectData['progress'] ?? 0,
         ];
+
+        return $service->execute($params);
     }
 
     public function render()
