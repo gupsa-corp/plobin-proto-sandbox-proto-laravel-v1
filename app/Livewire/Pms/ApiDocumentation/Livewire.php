@@ -101,6 +101,7 @@ class Livewire extends Component
 
     public function render()
     {
-        return view('700-page-pms-api-documentation/000-index');
+        return view('700-page-pms-api-documentation.000-index')
+            ->layout('700-page-pms-common.000-layout', ['title' => 'API 문서']);
     }
 }

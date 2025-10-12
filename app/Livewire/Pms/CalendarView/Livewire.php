@@ -337,7 +337,7 @@ class Livewire extends Component
 
     public function render()
     {
-        return view('700-page-pms-calendar-view/000-index')
-            ->layout('300-layout-common.000-app');
+        return view('700-page-pms-calendar-view.000-index')
+            ->layout('700-page-pms-common.000-layout', ['title' => '캘린더']);
     }
 }

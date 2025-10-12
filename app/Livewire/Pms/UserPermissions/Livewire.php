@@ -76,6 +76,7 @@ class Livewire extends Component
 
     public function render()
     {
-        return view('700-page-pms-user-permissions/000-index');
+        return view('700-page-pms-user-permissions.000-index')
+            ->layout('700-page-pms-common.000-layout', ['title' => '권한관리']);
     }
 }

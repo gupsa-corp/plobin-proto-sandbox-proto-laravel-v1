@@ -1,3 +1,7 @@
+{{-- Flatpickr CDN --}}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/[email protected]/dist/flatpickr.min.css">
+<script src="https://cdn.jsdelivr.net/npm/[email protected]/dist/flatpickr.min.js"></script>
+
 <div class="min-h-screen bg-gray-50 p-6"
      x-data="ganttData()"
      x-init="init(); loadGanttData()"
@@ -15,13 +19,15 @@
                 </div>
             </div>
             <div class="flex items-center space-x-3">
-                <div class="flex bg-gray-100 rounded-lg p-1">
+                <div class="inline-flex rounded-lg border border-gray-300 overflow-hidden">
+                    <button @click="setViewMode('hour')"
+                            :class="viewMode === 'hour' ? 'px-4 py-2 text-sm bg-orange-500 text-white font-medium' : 'px-4 py-2 text-sm text-gray-600 bg-white hover:bg-gray-50'">시간</button>
                     <button @click="setViewMode('month')"
-                            :class="viewMode === 'month' ? 'px-3 py-1 text-sm bg-white shadow-sm rounded-md' : 'px-3 py-1 text-sm text-gray-600'">월</button>
+                            :class="viewMode === 'month' ? 'px-4 py-2 text-sm bg-orange-500 text-white font-medium border-l border-gray-300' : 'px-4 py-2 text-sm text-gray-600 bg-white hover:bg-gray-50 border-l border-gray-300'">월</button>
                     <button @click="setViewMode('quarter')"
-                            :class="viewMode === 'quarter' ? 'px-3 py-1 text-sm bg-white shadow-sm rounded-md' : 'px-3 py-1 text-sm text-gray-600'">분기</button>
+                            :class="viewMode === 'quarter' ? 'px-4 py-2 text-sm bg-orange-500 text-white font-medium border-l border-gray-300' : 'px-4 py-2 text-sm text-gray-600 bg-white hover:bg-gray-50 border-l border-gray-300'">분기</button>
                     <button @click="setViewMode('year')"
-                            :class="viewMode === 'year' ? 'px-3 py-1 text-sm bg-white shadow-sm rounded-md' : 'px-3 py-1 text-sm text-gray-600'">년</button>
+                            :class="viewMode === 'year' ? 'px-4 py-2 text-sm bg-orange-500 text-white font-medium border-l border-gray-300' : 'px-4 py-2 text-sm text-gray-600 bg-white hover:bg-gray-50 border-l border-gray-300'">년</button>
                 </div>
                 <button @click="openCreateModal()" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">+ 프로젝트 추가</button>
             </div>
@@ -99,6 +105,15 @@
             <div class="flex border-b">
                 <div class="w-64 p-4 bg-gray-50 border-r font-semibold text-gray-900">프로젝트</div>
 
+                {{-- 시간 뷰 (하루를 24시간으로 표시) --}}
+                <div x-show="viewMode === 'hour'" class="flex-1 flex bg-gray-50">
+                    <template x-for="hour in 24" :key="hour">
+                        <div class="w-12 p-2 text-center border-r border-gray-200 bg-purple-50">
+                            <div class="text-xs text-purple-600 font-medium" x-text="(hour - 1) + '시'"></div>
+                        </div>
+                    </template>
+                </div>
+
                 {{-- 월 뷰 --}}
                 <div x-show="viewMode === 'month'" class="flex-1 flex bg-gray-50">
                     <template x-for="day in monthDays" :key="day.date">
@@ -153,7 +168,9 @@
                             <span x-text="formatDateRange(project.startDate, project.endDate)"></span>
                         </div>
                     </div>
-                    <div class="flex-1 relative flex items-center" style="height: 80px;">
+                    <div class="flex-1 relative flex items-center cursor-crosshair"
+                         style="height: 80px;"
+                         @click="handleEmptyAreaClick($event, project)">
                         {{-- 간트 바 --}}
                         <div x-show="project.startDate && project.endDate"
                              class="absolute inset-y-0 flex items-center cursor-move group"
@@ -302,6 +319,51 @@
                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-orange-500 focus:border-orange-500">
                 </div>
 
+                {{-- 시간 범위 선택 --}}
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">시간 설정 (몇시부터 몇시까지)</label>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs text-gray-500 mb-1">시작 시간</label>
+                            <input type="text"
+                                   x-ref="startTimePicker"
+                                   :value="selectedProject?.startTime || '09:00'"
+                                   @input="selectedProject ? selectedProject.startTime = $event.target.value : null"
+                                   placeholder="예: 09:00"
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-orange-500 focus:border-orange-500">
+                        </div>
+                        <div>
+                            <label class="block text-xs text-gray-500 mb-1">종료 시간</label>
+                            <input type="text"
+                                   x-ref="endTimePicker"
+                                   :value="selectedProject?.endTime || '18:00'"
+                                   @input="selectedProject ? selectedProject.endTime = $event.target.value : null"
+                                   placeholder="예: 18:00"
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-orange-500 focus:border-orange-500">
+                        </div>
+                    </div>
+                    <div class="mt-2">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">시간 단위 빠른 선택</label>
+                        <div class="grid grid-cols-3 gap-2">
+                            <button type="button"
+                                    @click="setEditTimeRange(2)"
+                                    class="px-3 py-2 text-sm border border-gray-300 rounded-md hover:bg-orange-50 hover:border-orange-300">
+                                2시간<br><span class="text-xs text-gray-500">(0.25일)</span>
+                            </button>
+                            <button type="button"
+                                    @click="setEditTimeRange(4)"
+                                    class="px-3 py-2 text-sm border border-gray-300 rounded-md hover:bg-orange-50 hover:border-orange-300">
+                                4시간<br><span class="text-xs text-gray-500">(0.5일)</span>
+                            </button>
+                            <button type="button"
+                                    @click="setEditTimeRange(8)"
+                                    class="px-3 py-2 text-sm border border-gray-300 rounded-md hover:bg-orange-50 hover:border-orange-300">
+                                8시간<br><span class="text-xs text-gray-500">(1일)</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
                 {{-- 추가 정보 --}}
                 <div class="bg-gray-50 p-4 rounded-lg">
                     <h4 class="text-sm font-medium text-gray-700 mb-3">프로젝트 정보</h4>
@@ -313,6 +375,10 @@
                         <div class="flex justify-between">
                             <span class="text-gray-500">기간:</span>
                             <span class="text-gray-900" x-text="calculateDuration(selectedProject?.startDate, selectedProject?.endDate)"></span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-500">시간 범위:</span>
+                            <span class="text-gray-900" x-text="(selectedProject?.startTime || '09:00') + ' ~ ' + (selectedProject?.endTime || '18:00')"></span>
                         </div>
                     </div>
                 </div>
@@ -390,6 +456,27 @@
                                 <input type="date"
                                        x-model="newProject.endDate"
                                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent">
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">시간 단위 선택</label>
+                            <div class="grid grid-cols-3 gap-2">
+                                <button type="button"
+                                        @click="setProjectDuration(0.25)"
+                                        class="px-3 py-2 text-sm border border-gray-300 rounded-md hover:bg-orange-50 hover:border-orange-300 focus:outline-none focus:ring-2 focus:ring-orange-500">
+                                    2시간<br><span class="text-xs text-gray-500">(0.25일)</span>
+                                </button>
+                                <button type="button"
+                                        @click="setProjectDuration(0.5)"
+                                        class="px-3 py-2 text-sm border border-gray-300 rounded-md hover:bg-orange-50 hover:border-orange-300 focus:outline-none focus:ring-2 focus:ring-orange-500">
+                                    4시간<br><span class="text-xs text-gray-500">(0.5일)</span>
+                                </button>
+                                <button type="button"
+                                        @click="setProjectDuration(1)"
+                                        class="px-3 py-2 text-sm border border-gray-300 rounded-md hover:bg-orange-50 hover:border-orange-300 focus:outline-none focus:ring-2 focus:ring-orange-500">
+                                    8시간<br><span class="text-xs text-gray-500">(1일)</span>
+                                </button>
                             </div>
                         </div>
 
@@ -488,6 +575,10 @@ function ganttData() {
         startX: 0,
         originalStartDate: null,
         originalEndDate: null,
+
+        // Flatpickr 인스턴스
+        startTimePickerInstance: null,
+        endTimePickerInstance: null,
 
         get currentMonthText() {
             return this.currentDate.toLocaleDateString('ko-KR', { year: 'numeric', month: 'long' });
@@ -590,10 +681,10 @@ function ganttData() {
         },
 
         // 프로젝트 생성 모달 관리
-        openCreateModal() {
+        openCreateModal(clickedDate = null) {
             this.createModalOpen = true;
             // 기본값 설정
-            const today = new Date().toISOString().split('T')[0];
+            const today = clickedDate || new Date().toISOString().split('T')[0];
             this.newProject = {
                 name: '',
                 description: '',
@@ -603,6 +694,45 @@ function ganttData() {
                 priority: 'medium',
                 progress: 0
             };
+        },
+
+        // 빈 공간 클릭 시 프로젝트 생성 모달 열기
+        handleEmptyAreaClick(event, project) {
+            // 이미 간트 바가 있는 경우 무시
+            if (project.startDate && project.endDate) {
+                return;
+            }
+
+            // 클릭한 위치에서 날짜 계산
+            const container = event.currentTarget;
+            const rect = container.getBoundingClientRect();
+            const clickX = event.clientX - rect.left;
+            const dayIndex = Math.floor(clickX / 32);
+
+            // 유효한 날짜 범위 확인
+            if (dayIndex >= 0 && dayIndex < this.monthDays.length) {
+                const clickedDate = this.monthDays[dayIndex].date;
+                this.openCreateModal(clickedDate);
+            }
+        },
+
+        // 시간 단위로 종료일 자동 설정
+        setProjectDuration(days) {
+            if (!this.newProject.startDate) {
+                alert('시작일을 먼저 선택해주세요.');
+                return;
+            }
+
+            const startDate = new Date(this.newProject.startDate);
+            const endDate = new Date(startDate);
+
+            // 0.25일(2시간), 0.5일(4시간)은 같은 날
+            // 1일(8시간)은 다음날
+            if (days >= 1) {
+                endDate.setDate(endDate.getDate() + Math.floor(days));
+            }
+
+            this.newProject.endDate = endDate.toISOString().split('T')[0];
         },
 
         closeCreateModal() {
@@ -639,11 +769,86 @@ function ganttData() {
         openSidebar(project) {
             this.selectedProject = { ...project };
             this.sidebarOpen = true;
+
+            // Flatpickr 초기화 (다음 렌더 사이클에서)
+            this.$nextTick(() => {
+                this.initTimePickers();
+            });
         },
 
         closeSidebar() {
             this.sidebarOpen = false;
             this.selectedProject = null;
+
+            // Flatpickr 인스턴스 정리
+            this.destroyTimePickers();
+        },
+
+        // Flatpickr 초기화
+        initTimePickers() {
+            if (this.$refs.startTimePicker && typeof flatpickr !== 'undefined') {
+                this.startTimePickerInstance = flatpickr(this.$refs.startTimePicker, {
+                    enableTime: true,
+                    noCalendar: true,
+                    dateFormat: 'H:i',
+                    time_24hr: true,
+                    defaultHour: 9,
+                    defaultMinute: 0,
+                    onChange: (selectedDates, dateStr) => {
+                        if (this.selectedProject) {
+                            this.selectedProject.startTime = dateStr;
+                        }
+                    }
+                });
+            }
+
+            if (this.$refs.endTimePicker && typeof flatpickr !== 'undefined') {
+                this.endTimePickerInstance = flatpickr(this.$refs.endTimePicker, {
+                    enableTime: true,
+                    noCalendar: true,
+                    dateFormat: 'H:i',
+                    time_24hr: true,
+                    defaultHour: 18,
+                    defaultMinute: 0,
+                    onChange: (selectedDates, dateStr) => {
+                        if (this.selectedProject) {
+                            this.selectedProject.endTime = dateStr;
+                        }
+                    }
+                });
+            }
+        },
+
+        // Flatpickr 인스턴스 정리
+        destroyTimePickers() {
+            if (this.startTimePickerInstance) {
+                this.startTimePickerInstance.destroy();
+                this.startTimePickerInstance = null;
+            }
+            if (this.endTimePickerInstance) {
+                this.endTimePickerInstance.destroy();
+                this.endTimePickerInstance = null;
+            }
+        },
+
+        // 시간 범위 빠른 설정 (편집 모드용)
+        setEditTimeRange(hours) {
+            if (!this.selectedProject) return;
+
+            // 기본 시작 시간 (09:00)
+            const startHour = 9;
+            const endHour = startHour + hours;
+
+            this.selectedProject.startTime = `${String(startHour).padStart(2, '0')}:00`;
+            this.selectedProject.endTime = `${String(endHour).padStart(2, '0')}:00`;
+
+            // Flatpickr 인스턴스 업데이트
+            if (this.startTimePickerInstance) {
+                this.startTimePickerInstance.setDate(`${startHour}:00`, false);
+            }
+            if (this.endTimePickerInstance) {
+                this.endTimePickerInstance.setDate(`${endHour}:00`, false);
+            }
         },
 
         // 드래그 앤 드롭 기능
@@ -746,7 +951,14 @@ function ganttData() {
             if (!this.selectedProject) return;
 
             try {
-                await @this.call('updateProject', this.selectedProject.id, this.selectedProject);
+                // 시간 데이터 포함하여 저장
+                const projectData = {
+                    ...this.selectedProject,
+                    startTime: this.selectedProject.startTime || '09:00',
+                    endTime: this.selectedProject.endTime || '18:00'
+                };
+
+                await @this.call('updateProject', this.selectedProject.id, projectData);
 
                 // 서버에서 최신 데이터 다시 로드
                 await this.loadGanttData();
@@ -765,7 +977,9 @@ function ganttData() {
 
             const startDate = new Date(project.startDate);
 
-            if (this.viewMode === 'month') {
+            if (this.viewMode === 'hour') {
+                return this.getHourViewBarStyle(project, startDate);
+            } else if (this.viewMode === 'month') {
                 return this.getMonthViewBarStyle(project, startDate);
             } else if (this.viewMode === 'quarter') {
                 return this.getQuarterViewBarStyle(project, startDate);
@@ -774,6 +988,54 @@ function ganttData() {
             }
 
             return 'display: none;';
+        },
+
+        getHourViewBarStyle(project, startDate) {
+            // 현재 날짜 (시간 뷰는 오늘 하루만 표시)
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+
+            const projectDay = new Date(startDate);
+            projectDay.setHours(0, 0, 0, 0);
+
+            // 오늘이 아니면 표시하지 않음
+            if (projectDay.getTime() !== today.getTime()) {
+                return 'display: none;';
+            }
+
+            let leftPosition = 0;
+            let width = 48; // 기본 최소 너비 (1시간 = 48px)
+
+            if (project.endDate) {
+                const endDate = new Date(project.endDate);
+                const endDay = new Date(endDate);
+                endDay.setHours(0, 0, 0, 0);
+
+                // 종료일이 오늘이 아니면 24시까지 표시
+                if (endDay.getTime() !== today.getTime()) {
+                    return 'display: none;';
+                }
+
+                // 시작 시간 (기본 0시)
+                const startHour = 0;
+
+                // 종료 시간 (기본 23시)
+                const endHour = 23;
+
+                // 시작 위치 계산 (시간당 48px)
+                leftPosition = startHour * 48;
+
+                // 너비 계산
+                const hours = endHour - startHour + 1;
+                width = hours * 48;
+
+            } else {
+                // 종료일이 없는 경우 시작 시간 위치에 표시
+                leftPosition = 0;
+                width = 48;
+            }
+
+            return `left: ${leftPosition}px; width: ${width}px;`;
         },
 
         getMonthViewBarStyle(project, startDate) {
@@ -933,6 +1195,11 @@ function ganttData() {
             const end = new Date(endDate);
             const diffTime = Math.abs(end - start);
             const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+            // 같은 날이면 시간 단위로 표시
+            if (diffDays === 0) {
+                return '8시간 (1일)';
+            }
 
             return `${diffDays}일`;
         },

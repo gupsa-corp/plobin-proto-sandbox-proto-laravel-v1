@@ -149,6 +149,7 @@ class Livewire extends Component
 
     public function render()
     {
-        return view('700-page-pms-bookmark-manager/000-index');
+        return view('700-page-pms-bookmark-manager.000-index')
+            ->layout('700-page-pms-common.000-layout', ['title' => '북마크']);
     }
 }

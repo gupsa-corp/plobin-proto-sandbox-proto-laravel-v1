@@ -30,6 +30,7 @@ class Livewire extends Component
 
     public function render()
     {
-        return view('700-page-pms-dashboard/000-index');
+        return view('700-page-pms-dashboard.000-index')
+            ->layout('700-page-pms-common.000-layout', ['title' => '대시보드']);
     }
 }

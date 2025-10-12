@@ -116,6 +116,6 @@ class Livewire extends Component
     public function render()
     {
         return view('700-page-pms-kanban-board.000-index')
-            ->layout('300-layout-common.000-app');
+            ->layout('700-page-pms-common.000-layout', ['title' => '칸반보드']);
     }
 }

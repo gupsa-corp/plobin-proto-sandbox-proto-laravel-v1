@@ -375,43 +375,49 @@ database/seeders/PlobinProductSeeder.php
 - 잘못된 예: 큰 파일 안에 모달, 드롭다운, 테이블 코드 섞어 놓기
 - **원칙**: 재사용 가능한 모든 UI 컴포넌트는 독립 파일로 분리
 
-#### 페이지급 분리 원칙 (탭 방식 금지)
+#### 페이지급 분리 원칙 (AJAX 방식 금지)
 **각 페이지는 독립된 URL과 폴더 구조로 분리**
 
 **올바른 구현 방식**:
 - URL 분리: `/admin/users`, `/admin/posts`, `/admin/settings`
 - 폴더 분리: `700-page-admin-users/`, `700-page-admin-posts/`, `700-page-admin-settings/`
 - 라우트 분리: 각각 독립된 Livewire 컴포넌트와 라우트 등록
+- **탭 UI 허용**: 각 탭은 독립된 페이지 링크(`<a href="">`)로 구현, 전체 페이지 리로드 방식
 
 **금지된 구현 방식**:
-- 탭 방식 UI: 하나의 페이지에서 JavaScript로 탭 전환
+- AJAX 탭 전환: JavaScript/Livewire로 페이지 리로드 없이 콘텐츠만 교체
 - 단일 URL: `/admin/dashboard?tab=users` 형태의 쿼리 파라미터 사용
 - 단일 폴더: 하나의 파일에 전체 페이지 구조 작성
 
 **구체적인 예시**:
 ```
-잘못된 방식 (탭 구현):
+❌ 잘못된 방식 (AJAX 탭 전환):
 /admin/dashboard (하나의 URL)
 ├── 700-page-admin-dashboard/000-index.blade.php (탭 UI)
-└── JavaScript로 탭 전환
+└── JavaScript/Livewire로 AJAX 콘텐츠 교체
 
-올바른 방식 (페이지 분리):
+✅ 올바른 방식 (독립 페이지 + 탭 UI):
 /admin/users → 700-page-admin-users/
 ├── 000-index.blade.php
-├── 100-header-navigation.blade.php
+├── 100-header-navigation.blade.php (공통 탭 네비게이션)
 └── 200-user-list.blade.php
 
 /admin/posts → 700-page-admin-posts/
 ├── 000-index.blade.php
-├── 100-header-navigation.blade.php
+├── 100-header-navigation.blade.php (공통 탭 네비게이션)
 └── 200-post-list.blade.php
+
+공통 탭 네비게이션 예시:
+<a href="/admin/users" class="{{ request()->is('admin/users') ? 'active' : '' }}">사용자</a>
+<a href="/admin/posts" class="{{ request()->is('admin/posts') ? 'active' : '' }}">게시글</a>
 ```
 
 **페이지 분리 강제 규칙**:
 - 각 기능은 독립된 URL 경로를 가져야 함
 - 각 기능은 독립된 폴더 구조를 가져야 함
 - 각 기능은 독립된 Livewire 컴포넌트를 가져야 함
-- **절대 금지**: 탭, 모달, JavaScript로 페이지 간 전환
+- **탭 UI 허용**: 각 탭은 `<a href="">` 링크로 구현하여 전체 페이지 리로드
+- **절대 금지**: AJAX, JavaScript, Livewire로 페이지 리로드 없이 콘텐츠 교체
 
 ### 기술 스택 제한
 **순수 JavaScript 사용 금지**

@@ -57,6 +57,6 @@ class Livewire extends Component
     public function render()
     {
         return view('700-page-pms-gantt-chart.000-index')
-            ->layout('300-layout-common.000-app');
+            ->layout('700-page-pms-common.000-layout', ['title' => '간트차트']);
     }
 }

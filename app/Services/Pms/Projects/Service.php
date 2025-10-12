@@ -58,7 +58,7 @@ class Service
                 'progress' => $project->progress,
                 'startDate' => $project->start_date?->format('Y-m-d'),
                 'endDate' => $project->end_date?->format('Y-m-d'),
-                'team' => $project->tags ?? [], // tags를 team으로 매핑
+                'team' => is_array($project->tags) ? $project->tags : [], // 무조건 배열로 변환
                 'createdAt' => $project->created_at->format('Y-m-d H:i:s')
             ];
         })->toArray();
