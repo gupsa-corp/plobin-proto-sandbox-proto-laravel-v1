@@ -49,6 +49,7 @@ class Livewire extends Component
     {
         $this->viewMode = $mode;
         $this->loadCalendarData();
+        $this->js("window.dispatchEvent(new CustomEvent('view-mode-changed', { detail: { mode: '{$mode}' } }))");
     }
 
     public function previousPeriod()
@@ -143,6 +144,7 @@ class Livewire extends Component
             session()->flash('message', '분석 요청이 성공적으로 생성되었습니다.');
             $this->closeCreateModal();
             $this->loadCalendarData();
+            $this->js("window.dispatchEvent(new CustomEvent('calendar-updated'))");
         } else {
             session()->flash('error', $result['message'] ?? '요청 생성에 실패했습니다.');
         }
@@ -157,11 +159,17 @@ class Livewire extends Component
 
     public function showEventDetail($eventId)
     {
+        \Log::info('showEventDetail called with ID: ' . $eventId);
         $this->selectedEventId = $eventId;
         $this->showEventDetailModal = true;
+        \Log::info('Modal flags set - showEventDetailModal: ' . ($this->showEventDetailModal ? 'true' : 'false'));
+        \Log::info('Total requests count: ' . count($this->requests));
 
         // 즉시 수정 모드로 진입
         $this->enableEditMode();
+
+        // Dispatch event to Alpine.js to show modal
+        $this->dispatch('show-modal');
     }
 
     public function closeEventDetailModal()
@@ -170,20 +178,28 @@ class Livewire extends Component
         $this->showEventDetailModal = false;
         $this->editMode = false;
         $this->resetEditForm();
+
+        // JavaScript 이벤트 디스패치
+        $this->js("window.dispatchEvent(new CustomEvent('close-event-modal'))");
     }
 
     public function getSelectedEvent()
     {
         if (!$this->selectedEventId) {
+            \Log::info('getSelectedEvent: selectedEventId is null');
             return null;
         }
 
+        \Log::info('getSelectedEvent: Searching for ID ' . $this->selectedEventId . ' in ' . count($this->requests) . ' requests');
+
         foreach ($this->requests as $event) {
             if ($event['id'] == $this->selectedEventId) {
+                \Log::info('getSelectedEvent: Found event with title: ' . $event['title']);
                 return $event;
             }
         }
 
+        \Log::info('getSelectedEvent: Event not found');
         return null;
     }
 
@@ -263,6 +279,7 @@ class Livewire extends Component
             $this->editMode = false;
             $this->closeEventDetailModal();
             $this->loadCalendarData();
+            $this->js("window.dispatchEvent(new CustomEvent('calendar-updated'))");
         } else {
             session()->flash('error', $result['message'] ?? '수정에 실패했습니다.');
         }
@@ -333,6 +350,68 @@ class Livewire extends Component
             }
         }
         return $grouped;
+    }
+
+    /**
+     * FullCalendar 형식으로 이벤트 데이터 변환
+     */
+    public function getFullCalendarEvents()
+    {
+        $events = [];
+
+        foreach ($this->requests as $request) {
+            $events[] = [
+                'id' => $request['id'],
+                'title' => $request['title'],
+                'start' => $request['start_date'] ?? $request['date'],
+                'end' => $request['end_date'] ?
+                        \Carbon\Carbon::parse($request['end_date'])->addDay()->format('Y-m-d') :
+                        null, // FullCalendar는 종료일이 exclusive이므로 +1일
+                'allDay' => true,
+                'backgroundColor' => $this->getPriorityColor($request['priority']),
+                'borderColor' => $this->getPriorityBorderColor($request['priority']),
+                'textColor' => '#1f2937',
+                'extendedProps' => [
+                    'priority' => $request['priority'],
+                    'status' => $request['status'],
+                    'requester' => $request['requester'] ?? '미정',
+                    'assignee' => $request['assignee'] ?? '미할당',
+                    'estimated_hours' => $request['estimated_hours'],
+                    'completed_percentage' => $request['completed_percentage'],
+                    'description' => $request['description'] ?? '',
+                ]
+            ];
+        }
+
+        return $events;
+    }
+
+    /**
+     * 우선순위별 배경색 반환
+     */
+    private function getPriorityColor($priority)
+    {
+        return match($priority) {
+            'urgent' => '#fee2e2',    // red-100
+            'high' => '#fed7aa',      // orange-100
+            'medium' => '#dbeafe',    // blue-100
+            'low' => '#f3f4f6',       // gray-100
+            default => '#f3f4f6',
+        };
+    }
+
+    /**
+     * 우선순위별 테두리색 반환
+     */
+    private function getPriorityBorderColor($priority)
+    {
+        return match($priority) {
+            'urgent' => '#dc2626',    // red-600
+            'high' => '#ea580c',      // orange-600
+            'medium' => '#2563eb',    // blue-600
+            'low' => '#6b7280',       // gray-500
+            default => '#6b7280',
+        };
     }
 
     public function render()
