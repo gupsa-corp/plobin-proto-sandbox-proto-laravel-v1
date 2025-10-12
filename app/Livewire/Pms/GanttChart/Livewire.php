@@ -7,53 +7,38 @@ use App\Services\Pms\Projects\Service;
 
 class Livewire extends Component
 {
-    public $projects;
-    public $timeRange = '3months';
-    public $viewMode = 'Month';
-    public $selectedProject = null;
+    /**
+     * Livewire에서는 단순히 데이터 제공만 하고,
+     * 모든 UI 로직은 Alpine.js에서 처리
+     */
 
-    public function mount()
-    {
-        $this->loadGanttData();
-    }
-
-    public function changeTimeRange($range)
-    {
-        $this->timeRange = $range;
-        $this->loadGanttData();
-    }
-
-    public function changeViewMode($mode)
-    {
-        $this->viewMode = $mode;
-        $this->loadGanttData();
-    }
-
-    public function selectProject($projectId)
-    {
-        $this->selectedProject = $projectId;
-    }
-
-    public function updateProjectDates($projectId, $startDate, $endDate)
-    {
-        // 프로젝트 날짜 업데이트 로직
-        foreach($this->projects as &$project) {
-            if($project['id'] == $projectId) {
-                $project['startDate'] = $startDate;
-                $project['endDate'] = $endDate;
-                break;
-            }
-        }
-        
-        // 실제로는 서비스를 통해 데이터베이스 업데이트 필요
-        $this->dispatch('project-updated', ['projectId' => $projectId, 'message' => '프로젝트 일정이 업데이트되었습니다.']);
-    }
-
-    public function loadGanttData()
+    public function getProjects()
     {
         $service = new Service();
         $result = $service->execute();
-        $this->projects = $result['data'];
+        return $result['data'] ?? [];
+    }
+
+    public function createProject($projectData)
+    {
+        // TODO: 프로젝트 생성 서비스 호출
+        // Service를 통해 생성 로직 구현 필요
+
+        return [
+            'success' => true,
+            'message' => '프로젝트가 생성되었습니다.'
+        ];
+    }
+
+    public function updateProject($projectId, $projectData)
+    {
+        // TODO: 프로젝트 업데이트 서비스 호출
+        // Service를 통해 업데이트 로직 구현 필요
+
+        return [
+            'success' => true,
+            'message' => '프로젝트가 업데이트되었습니다.'
+        ];
     }
 
     public function render()
