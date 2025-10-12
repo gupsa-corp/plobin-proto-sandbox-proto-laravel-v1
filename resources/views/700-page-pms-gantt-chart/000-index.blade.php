@@ -748,14 +748,10 @@ function ganttData() {
             try {
                 await @this.call('updateProject', this.selectedProject.id, this.selectedProject);
 
-                // 메인 데이터 업데이트
-                const projectIndex = this.projects.findIndex(p => p.id === this.selectedProject.id);
-                if (projectIndex !== -1) {
-                    this.projects[projectIndex] = { ...this.selectedProject };
-                }
+                // 서버에서 최신 데이터 다시 로드
+                await this.loadGanttData();
 
                 this.closeSidebar();
-                this.calculateStats();
                 alert('저장되었습니다.');
             } catch (error) {
                 console.error('저장 오류:', error);
