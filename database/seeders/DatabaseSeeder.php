@@ -23,6 +23,7 @@ class DatabaseSeeder extends Seeder
         // PMS 프로젝트 시더
         $this->call([
             PlobinPmsKanbanSeeder::class,
+            PlobinGanttSeeder::class,
         ]);
     }
 }
