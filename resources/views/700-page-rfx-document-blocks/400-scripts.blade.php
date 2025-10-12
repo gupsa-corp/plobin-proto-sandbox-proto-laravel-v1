@@ -6,3 +6,4 @@ document.addEventListener('livewire:init', () => {
         console.log('Block updated:', event);
     });
 });
+</script>

@@ -132,6 +132,6 @@ return [
     |
     */
 
-    'ocr_service_url' => env('OCR_SERVICE_URL', 'http://seoul.gupsa.net:6003'),
+    'ocr_service_url' => env('OCR_SERVICE_URL', 'http://localhost:6003'),
 
 ];

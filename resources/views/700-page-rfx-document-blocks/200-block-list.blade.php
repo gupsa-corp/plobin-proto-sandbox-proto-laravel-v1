@@ -14,13 +14,13 @@
                             <div class="flex items-center space-x-2 mb-2">
                                 <!-- 블록 타입 아이콘 -->
                                 <span class="text-xl">
-                                    @if($block['block_type'] === 'title')
+                                    @if(($block['type'] ?? '') === 'title')
                                         📌
-                                    @elseif($block['block_type'] === 'paragraph')
+                                    @elseif(($block['type'] ?? '') === 'paragraph')
                                         📄
-                                    @elseif($block['block_type'] === 'table')
+                                    @elseif(($block['type'] ?? '') === 'table')
                                         📋
-                                    @elseif($block['block_type'] === 'list')
+                                    @elseif(($block['type'] ?? '') === 'list')
                                         📝
                                     @else
                                         📦
@@ -29,8 +29,8 @@
 
                                 <!-- 블록 번호 및 타입 -->
                                 <span class="font-semibold text-gray-900">블록 #{{ $block['block_id'] }}</span>
-                                <span class="px-2 py-1 text-xs rounded {{ $block['block_type'] === 'title' ? 'bg-green-100 text-green-800' : ($block['block_type'] === 'paragraph' ? 'bg-blue-100 text-blue-800' : ($block['block_type'] === 'table' ? 'bg-orange-100 text-orange-800' : 'bg-gray-100 text-gray-800')) }}">
-                                    {{ $block['block_type'] }}
+                                <span class="px-2 py-1 text-xs rounded {{ ($block['type'] ?? '') === 'title' ? 'bg-green-100 text-green-800' : (($block['type'] ?? '') === 'paragraph' ? 'bg-blue-100 text-blue-800' : (($block['type'] ?? '') === 'table' ? 'bg-orange-100 text-orange-800' : 'bg-gray-100 text-gray-800')) }}">
+                                    {{ $block['type'] ?? 'text' }}
                                 </span>
 
                                 <!-- 신뢰도 -->

@@ -32,7 +32,7 @@
             </div>
         </div>
     </div>
-
-    <!-- JavaScript -->
-    @include('700-page-rfx-document-sections.400-scripts')
 </div>
+
+<!-- JavaScript -->
+@include('700-page-rfx-document-sections.400-scripts')

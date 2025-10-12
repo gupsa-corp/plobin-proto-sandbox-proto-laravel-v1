@@ -6,3 +6,4 @@ document.addEventListener('livewire:init', () => {
         console.log('Section selected:', event);
     });
 });
+</script>
