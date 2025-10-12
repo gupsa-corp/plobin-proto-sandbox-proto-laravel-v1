@@ -10,8 +10,6 @@ Route::get('/pms/kanban', \App\Livewire\Pms\KanbanBoard\Livewire::class)->name('
 Route::get('/pms/gantt', \App\Livewire\Pms\GanttChart\Livewire::class)->name('pms.gantt');
 Route::get('/pms/calendar', \App\Livewire\Pms\CalendarView\Livewire::class)->name('pms.calendar');
 Route::get('/pms/permissions', \App\Livewire\Pms\UserPermissions\Livewire::class)->name('pms.permissions');
-Route::get('/pms/api-docs', \App\Livewire\Pms\ApiDocumentation\Livewire::class)->name('pms.api-docs');
-Route::get('/pms/bookmarks', \App\Livewire\Pms\BookmarkManager\Livewire::class)->name('pms.bookmarks');
 Route::get('/pms/ticket/{ticketId?}', \App\Livewire\Pms\TicketDetail\Livewire::class)->name('pms.ticket');
 
 // RFX System Routes - AI Analysis
