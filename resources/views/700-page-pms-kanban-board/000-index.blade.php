@@ -35,16 +35,31 @@
                              data-column-id="{{ $column['id'] }}"
                              wire:key="project-{{ $project['id'] }}">
 
-                            <!-- Card Header -->
-                            <div class="flex items-start justify-between mb-2 p-4 pb-0 drag-handle cursor-move">
-                                <h4 class="font-medium text-gray-900 text-sm">{{ $project['title'] }}</h4>
-                                <span class="px-2 py-1 text-xs rounded-full font-medium flex-shrink-0 ml-2
-                                    {{ $project['priority'] === 'high' ? 'bg-red-100 text-red-800' :
-                                       ($project['priority'] === 'medium' ? 'bg-yellow-100 text-yellow-800' :
-                                       'bg-green-100 text-green-800') }}">
-                                    {{ $project['priority'] === 'high' ? '높음' :
-                                       ($project['priority'] === 'medium' ? '보통' : '낮음') }}
-                                </span>
+                            <!-- Card Header with Drag Handle -->
+                            <div class="flex items-start gap-2 mb-2 p-4 pb-0">
+                                <!-- 6-Dot Drag Handle Icon -->
+                                <div class="drag-handle cursor-grab active:cursor-grabbing flex-shrink-0 pt-1 group">
+                                    <svg class="w-4 h-4 text-gray-400 group-hover:text-gray-600 transition-colors pointer-events-none" viewBox="0 0 16 16" fill="currentColor">
+                                        <circle cx="4" cy="4" r="1.5"/>
+                                        <circle cx="4" cy="8" r="1.5"/>
+                                        <circle cx="4" cy="12" r="1.5"/>
+                                        <circle cx="8" cy="4" r="1.5"/>
+                                        <circle cx="8" cy="8" r="1.5"/>
+                                        <circle cx="8" cy="12" r="1.5"/>
+                                    </svg>
+                                </div>
+
+                                <!-- Card Content -->
+                                <div class="flex items-start justify-between flex-1 min-w-0">
+                                    <h4 class="font-medium text-gray-900 text-sm">{{ $project['title'] }}</h4>
+                                    <span class="px-2 py-1 text-xs rounded-full font-medium flex-shrink-0 ml-2
+                                        {{ $project['priority'] === 'high' ? 'bg-red-100 text-red-800' :
+                                           ($project['priority'] === 'medium' ? 'bg-yellow-100 text-yellow-800' :
+                                           'bg-green-100 text-green-800') }}">
+                                        {{ $project['priority'] === 'high' ? '높음' :
+                                           ($project['priority'] === 'medium' ? '보통' : '낮음') }}
+                                    </span>
+                                </div>
                             </div>
 
                             <!-- Clickable Content Area -->
@@ -85,6 +100,23 @@
     @include('700-page-pms-kanban-board.300-project-detail-modal')
 
     @push('scripts')
+    <style>
+        /* SortableJS 드래그 상태 스타일 */
+        .sortable-ghost {
+            opacity: 0.5;
+            background-color: #eff6ff;
+        }
+        .sortable-chosen {
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            outline: 2px solid #60a5fa;
+            outline-offset: 2px;
+        }
+        .sortable-drag {
+            opacity: 0.75;
+            transform: rotate(2deg);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+        }
+    </style>
     <script>
         document.addEventListener('livewire:init', function() {
             // 모든 칸반 컬럼에 SortableJS 적용
@@ -92,7 +124,9 @@
                 new Sortable(column, {
                     group: 'kanban',
                     animation: 150,
-                    ghostClass: 'opacity-50',
+                    ghostClass: 'sortable-ghost',      // 드롭 위치 표시
+                    chosenClass: 'sortable-chosen',    // 선택된 카드
+                    dragClass: 'sortable-drag',        // 드래그 중인 카드
                     handle: '.drag-handle',  // 드래그 핸들로만 드래그 가능
                     onEnd: function(evt) {
                         const taskId = evt.item.dataset.taskId;
@@ -106,8 +140,12 @@
                             return;
                         }
 
-                        // Livewire 메서드 호출
-                        @this.call('moveTask', parseInt(taskId), fromColumn, toColumn);
+                        // Livewire 메서드 호출 후 페이지 새로고침
+                        @this.call('moveTask', parseInt(taskId), fromColumn, toColumn)
+                            .then(() => {
+                                // 서버 업데이트 후 페이지 새로고침
+                                window.location.reload();
+                            });
                     }
                 });
             });
