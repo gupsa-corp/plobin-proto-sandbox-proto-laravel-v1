@@ -44,7 +44,7 @@ class Livewire extends Component
         foreach ($this->files as $index => $file) {
             $this->uploadProgress[$index] = 0;
 
-            // 1단계: 파일을 디스크에 저장
+            // 1단계: 파일 업로드
             $uploadResult = $uploadService->execute(['file' => $file]);
 
             if (!$uploadResult['success']) {
@@ -54,19 +54,12 @@ class Livewire extends Component
 
             $this->uploadProgress[$index] = 50;
 
-            // 2단계: 저장된 파일 경로로 OCR 처리 요청
-            // Storage 퍼사드를 사용해 실제 경로 가져오기
+            // 2단계: OCR 처리 요청
             $storedName = $uploadResult['data']['stored_name'] ?? '';
-
             if ($storedName) {
-                $filePath = \Illuminate\Support\Facades\Storage::disk('plobin_uploads')->path($storedName);
-
-                if (file_exists($filePath)) {
-                    $result = $ocrService->execute(['file_path' => $filePath]);
-
-                    if ($result['success']) {
-                        $this->uploadProgress[$index] = 100;
-                    }
+                $ocrResult = $ocrService->execute(['stored_name' => $storedName]);
+                if ($ocrResult['success']) {
+                    $this->uploadProgress[$index] = 100;
                 }
             }
         }

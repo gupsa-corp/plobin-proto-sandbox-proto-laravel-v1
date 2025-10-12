@@ -21,6 +21,15 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->api(remove: [
             \Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class,
         ]);
+
+        // iframe 외부 연동을 위한 CSRF 예외 처리
+        $middleware->validateCsrfTokens(except: [
+            'rfx/*',
+            'livewire/*',
+            'livewire/update',
+            'livewire/upload-file',
+            'browser-mode/*',
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //
