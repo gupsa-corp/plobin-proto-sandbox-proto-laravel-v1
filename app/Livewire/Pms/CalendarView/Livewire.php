@@ -3,6 +3,7 @@
 namespace App\Livewire\Pms\CalendarView;
 
 use Livewire\Component;
+use Livewire\Attributes\On;
 use App\Services\Pms\GetCalendarRequests\Service;
 use Carbon\Carbon;
 
@@ -150,6 +151,11 @@ class Livewire extends Component
         }
     }
 
+    public function toggleFilters()
+    {
+        $this->showFilters = !$this->showFilters;
+    }
+
     public function clearFilters()
     {
         $this->filterPriority = '';
@@ -157,6 +163,7 @@ class Livewire extends Component
         $this->loadCalendarData();
     }
 
+    #[On('show-event-detail')]
     public function showEventDetail($eventId)
     {
         \Log::info('showEventDetail called with ID: ' . $eventId);
@@ -167,9 +174,6 @@ class Livewire extends Component
 
         // 즉시 수정 모드로 진입
         $this->enableEditMode();
-
-        // Dispatch event to Alpine.js to show modal
-        $this->dispatch('show-modal');
     }
 
     public function closeEventDetailModal()
@@ -178,9 +182,6 @@ class Livewire extends Component
         $this->showEventDetailModal = false;
         $this->editMode = false;
         $this->resetEditForm();
-
-        // JavaScript 이벤트 디스패치
-        $this->js("window.dispatchEvent(new CustomEvent('close-event-modal'))");
     }
 
     public function getSelectedEvent()

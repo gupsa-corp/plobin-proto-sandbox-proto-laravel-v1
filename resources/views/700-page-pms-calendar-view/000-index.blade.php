@@ -11,10 +11,9 @@
 
 <div class="p-6 bg-gray-50 min-h-screen"
      x-data="{
-         showModal: @entangle('showEventDetailModal').live
-     }"
-     @show-modal.window="showModal = true"
-     @close-modal.window="showModal = false">
+         showModal: @entangle('showEventDetailModal').live,
+         showFilters: @entangle('showFilters').live
+     }">
     <div class="max-w-7xl mx-auto">
         @include('700-page-pms-calendar-view.100-header-calendar-controls')
 

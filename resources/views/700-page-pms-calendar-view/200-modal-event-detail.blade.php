@@ -8,11 +8,10 @@
      x-transition:leave-start="opacity-100 scale-100"
      x-transition:leave-end="opacity-0 scale-95"
      class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
-     @click="showModal = false; $wire.call('closeEventDetailModal')">
+     @click="showModal = false" wire:click="closeEventDetailModal">
     @php
         $selectedEvent = $this->getSelectedEvent();
     @endphp
-    @if($selectedEvent)
     <div class="bg-white rounded-lg p-6 w-full max-w-2xl max-h-screen overflow-y-auto"
          @click.stop>
         <div class="flex justify-between items-start mb-4">
@@ -20,10 +19,10 @@
                 @if($editMode)
                 일정 수정
                 @else
-                {{ $selectedEvent['title'] }}
+                {{ $selectedEvent['title'] ?? '' }}
                 @endif
             </h3>
-            <button @click="showModal = false; $wire.call('closeEventDetailModal')"
+            <button @click="showModal = false" wire:click="closeEventDetailModal"
                     class="text-gray-400 hover:text-gray-600">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
@@ -133,33 +132,33 @@
             <!-- Status and Priority -->
             <div class="flex items-center gap-2">
                 <span class="px-3 py-1 text-sm rounded-full font-medium
-                    @if($selectedEvent['priority'] === 'urgent') bg-red-100 text-red-800
-                    @elseif($selectedEvent['priority'] === 'high') bg-orange-100 text-orange-800
-                    @elseif($selectedEvent['priority'] === 'medium') bg-blue-100 text-blue-800
+                    @if(($selectedEvent['priority'] ?? '') === 'urgent') bg-red-100 text-red-800
+                    @elseif(($selectedEvent['priority'] ?? '') === 'high') bg-orange-100 text-orange-800
+                    @elseif(($selectedEvent['priority'] ?? '') === 'medium') bg-blue-100 text-blue-800
                     @else bg-gray-100 text-gray-800
                     @endif">
-                    우선순위: {{ strtoupper($selectedEvent['priority']) }}
+                    우선순위: {{ strtoupper($selectedEvent['priority'] ?? 'medium') }}
                 </span>
                 <span class="px-3 py-1 text-sm rounded-full font-medium
-                    @if($selectedEvent['status'] === 'in_progress') bg-blue-100 text-blue-800
-                    @elseif($selectedEvent['status'] === 'pending') bg-yellow-100 text-yellow-800
-                    @elseif($selectedEvent['status'] === 'completed') bg-green-100 text-green-800
+                    @if(($selectedEvent['status'] ?? '') === 'in_progress') bg-blue-100 text-blue-800
+                    @elseif(($selectedEvent['status'] ?? '') === 'pending') bg-yellow-100 text-yellow-800
+                    @elseif(($selectedEvent['status'] ?? '') === 'completed') bg-green-100 text-green-800
                     @else bg-gray-100 text-gray-800
                     @endif">
                     상태:
-                    @if($selectedEvent['status'] === 'in_progress') 진행중
-                    @elseif($selectedEvent['status'] === 'pending') 대기중
-                    @elseif($selectedEvent['status'] === 'completed') 완료
-                    @else {{ $selectedEvent['status'] }}
+                    @if(($selectedEvent['status'] ?? '') === 'in_progress') 진행중
+                    @elseif(($selectedEvent['status'] ?? '') === 'pending') 대기중
+                    @elseif(($selectedEvent['status'] ?? '') === 'completed') 완료
+                    @else {{ $selectedEvent['status'] ?? '' }}
                     @endif
                 </span>
             </div>
 
             <!-- Description -->
-            @if($selectedEvent['description'])
+            @if(($selectedEvent['description'] ?? '') !== '')
             <div>
                 <h4 class="font-medium text-gray-900 mb-2">상세 설명</h4>
-                <p class="text-gray-600 whitespace-pre-wrap">{{ $selectedEvent['description'] }}</p>
+                <p class="text-gray-600 whitespace-pre-wrap">{{ $selectedEvent['description'] ?? '' }}</p>
             </div>
             @endif
 
@@ -183,19 +182,19 @@
                 </div>
                 <div>
                     <p class="text-sm text-gray-500">예상 소요시간</p>
-                    <p class="font-medium text-gray-900">{{ $selectedEvent['estimated_hours'] ? $selectedEvent['estimated_hours'] . '시간' : '-' }}</p>
+                    <p class="font-medium text-gray-900">{{ ($selectedEvent['estimated_hours'] ?? null) ? $selectedEvent['estimated_hours'] . '시간' : '-' }}</p>
                 </div>
             </div>
 
             <!-- Progress Bar -->
-            @if($selectedEvent['completed_percentage'] > 0)
+            @if(($selectedEvent['completed_percentage'] ?? 0) > 0)
             <div>
                 <div class="flex justify-between items-center mb-2">
                     <p class="text-sm font-medium text-gray-700">진행률</p>
-                    <p class="text-sm font-bold text-blue-600">{{ $selectedEvent['completed_percentage'] }}%</p>
+                    <p class="text-sm font-bold text-blue-600">{{ $selectedEvent['completed_percentage'] ?? 0 }}%</p>
                 </div>
                 <div class="w-full bg-gray-200 rounded-full h-3">
-                    <div class="bg-blue-600 h-3 rounded-full transition-all duration-300" style="width: {{ $selectedEvent['completed_percentage'] }}%"></div>
+                    <div class="bg-blue-600 h-3 rounded-full transition-all duration-300" style="width: {{ $selectedEvent['completed_percentage'] ?? 0 }}%"></div>
                 </div>
             </div>
             @endif
@@ -206,12 +205,11 @@
                     class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
                 수정
             </button>
-            <button @click="showModal = false; $wire.call('closeEventDetailModal')"
+            <button @click="showModal = false" wire:click="closeEventDetailModal"
                     class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors">
                 닫기
             </button>
         </div>
         @endif
     </div>
-    @endif
 </div>

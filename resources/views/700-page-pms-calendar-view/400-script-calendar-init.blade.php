@@ -59,9 +59,16 @@ function initCalendar() {
         height: 'auto',
 
         events: function(fetchInfo, successCallback, failureCallback) {
+            console.log('Events function called');
+            console.log('Fetch info:', fetchInfo);
+
             @this.call('getFullCalendarEvents').then(events => {
-                console.log('Events loaded:', events.length);
+                console.log('Events loaded successfully:', events.length);
+                console.log('First event:', events[0]);
                 successCallback(events);
+            }).catch(error => {
+                console.error('Failed to load events:', error);
+                failureCallback(error);
             });
         },
 
@@ -69,8 +76,8 @@ function initCalendar() {
             console.log('Event clicked, ID:', info.event.id);
             const eventId = parseInt(info.event.id);
 
-            // Call Livewire method via $wire
-            Livewire.first().$wire.call('showEventDetail', eventId);
+            // Dispatch Livewire event to show modal
+            Livewire.dispatch('show-event-detail', { eventId: eventId });
         },
 
         dateClick: function(info) {

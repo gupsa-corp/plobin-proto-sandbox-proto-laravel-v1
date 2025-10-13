@@ -1,6 +1,7 @@
 <!-- Filters Panel -->
-@if($showFilters)
-<div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-6 transform transition-all duration-300 ease-in-out">
+<div x-show="showFilters"
+     x-transition
+     class="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-6 transform transition-all duration-300 ease-in-out">
     <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div>
             <label class="block text-sm font-medium text-gray-700 mb-2">우선순위</label>
@@ -31,4 +32,3 @@
         </div>
     </div>
 </div>
-@endif
