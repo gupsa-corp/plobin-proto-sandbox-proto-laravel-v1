@@ -11,6 +11,7 @@ use App\Services\Rfx\BlockSummary\SaveSummary\Service as SaveSummaryService;
 use App\Services\Rfx\BlockSummary\SavePageSummary\Service as SavePageSummaryService;
 use App\Services\Rfx\BlockSummary\SaveSectionAnalysis\Service as SaveSectionAnalysisService;
 use App\Services\Rfx\BlockSummary\GetSavedSummary\Service as GetSavedSummaryService;
+use App\Services\Rfx\BlockSummary\UpdateSectionVersion\Service as UpdateSectionVersionService;
 
 class Livewire extends Component
 {
@@ -23,6 +24,8 @@ class Livewire extends Component
     public $search = '';
     public $statusFilter = '';
     public $savedSummary = null; // 저장된 요약 데이터
+    public $editingContent = []; // 수정 중인 교정 내용
+    public $selectedVersions = []; // 섹션별 선택된 버전 ID
 
     public function mount()
     {
@@ -160,6 +163,46 @@ class Livewire extends Component
     public function updatedStatusFilter()
     {
         $this->loadDocuments();
+    }
+
+    public function saveCorrection($sectionId)
+    {
+        if (!isset($this->editingContent[$sectionId])) {
+            session()->flash('error', '수정된 내용이 없습니다');
+            return;
+        }
+
+        $service = new UpdateSectionVersionService();
+        $result = $service->execute([
+            'section_id' => $sectionId,
+            'new_summary' => $this->editingContent[$sectionId],
+            'user_id' => auth()->id() ?? 'user',
+        ]);
+
+        if ($result['success']) {
+            session()->flash('message', '교정 내용이 저장되었습니다 (기본)');
+            // 저장된 데이터 다시 로드
+            $this->selectDocument($this->selectedDocument['id']);
+        } else {
+            session()->flash('error', $result['message']);
+        }
+    }
+
+    public function setDefaultVersion($sectionId, $versionId)
+    {
+        $service = new \App\Services\Rfx\BlockSummary\SetDefaultVersion\Service();
+        $result = $service->execute([
+            'section_id' => $sectionId,
+            'version_id' => $versionId,
+        ]);
+
+        if ($result['success']) {
+            session()->flash('message', '선택한 버전이 기본값으로 설정되었습니다');
+            // 저장된 데이터 다시 로드
+            $this->selectDocument($this->selectedDocument['id']);
+        } else {
+            session()->flash('error', $result['message']);
+        }
     }
 
     public function render()

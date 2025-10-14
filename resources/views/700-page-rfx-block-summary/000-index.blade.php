@@ -186,54 +186,131 @@
                                             <div class="flex-1 min-w-0">
                                                 <div class="font-medium text-gray-900 mb-2">{{ $section->section_title }}</div>
 
-                                                <!-- 3단 그리드: 원문 | AI 요약 | 도움되는 내용 -->
-                                                <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
-                                                    <!-- 원문 -->
+                                                <!-- 2단 그리드: 원문 (이미지 포함) | 교정 (편집 가능) -->
+                                                <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                                                    <!-- 원문 (이미지 + 텍스트) 또는 버전 선택 -->
                                                     <div>
+                                                        @if($section->versions->count() > 1)
+                                                        <!-- 버전이 2개 이상이면 드롭다운으로 표시 -->
+                                                        <h5 class="text-xs font-semibold text-gray-700 mb-1 flex items-center justify-between">
+                                                            <div class="flex items-center">
+                                                                <svg class="w-4 h-4 text-blue-500 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                                                </svg>
+                                                                버전 선택
+                                                            </div>
+                                                            <span class="text-xs text-gray-500">{{ $section->versions->count() }}개 버전</span>
+                                                        </h5>
+                                                        <div class="space-y-2">
+                                                            <!-- 버전 드롭다운 -->
+                                                            <select
+                                                                wire:model.live="selectedVersions.{{ $section->id }}"
+                                                                class="w-full p-2 bg-blue-50 rounded text-xs text-gray-700 border border-blue-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                                            >
+                                                                @foreach($section->versions->sortByDesc('created_at') as $version)
+                                                                <option value="{{ $version->id }}">
+                                                                    {{ $version->version_display_name }}
+                                                                    @if($version->is_current) (기본) @endif
+                                                                </option>
+                                                                @endforeach
+                                                            </select>
+
+                                                            <!-- 선택된 버전의 내용 표시 -->
+                                                            @php
+                                                                $selectedVersionId = $selectedVersions[$section->id] ?? $section->currentVersion->id ?? null;
+                                                                $displayVersion = $section->versions->firstWhere('id', $selectedVersionId) ?? $section->currentVersion;
+                                                            @endphp
+                                                            @if($displayVersion)
+                                                            <div class="p-2 bg-blue-50 rounded border border-blue-200">
+                                                                <div class="text-xs text-gray-700 whitespace-pre-wrap">
+                                                                    {{ $displayVersion->ai_summary }}
+                                                                </div>
+                                                            </div>
+
+                                                            <!-- 기본값 설정 버튼 -->
+                                                            @if(!$displayVersion->is_current)
+                                                            <button
+                                                                wire:click="setDefaultVersion('{{ $section->id }}', '{{ $displayVersion->id }}')"
+                                                                class="w-full px-3 py-1.5 bg-blue-600 text-white text-xs rounded hover:bg-blue-700 transition-colors flex items-center justify-center space-x-1"
+                                                            >
+                                                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                                                                </svg>
+                                                                <span>이 버전을 기본값으로 설정</span>
+                                                            </button>
+                                                            @else
+                                                            <div class="text-xs text-center text-blue-600 font-medium">
+                                                                현재 기본 버전
+                                                            </div>
+                                                            @endif
+                                                            @endif
+                                                        </div>
+                                                        @else
+                                                        <!-- 버전이 1개만 있으면 원문 표시 -->
                                                         <h5 class="text-xs font-semibold text-gray-700 mb-1 flex items-center">
                                                             <svg class="w-4 h-4 text-blue-500 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
                                                             </svg>
                                                             원문
                                                         </h5>
-                                                        <div class="p-2 bg-blue-50 rounded text-xs text-gray-700">
-                                                            {{ $section->original_content }}
+                                                        <div class="p-2 bg-blue-50 rounded">
+                                                            <!-- 블록 이미지 -->
+                                                            @if(isset($section->block_id) && $section->block_id !== 'unknown')
+                                                            <div class="mb-2">
+                                                                <img
+                                                                    src="{{ config('services.ocr.base_url') }}/requests/{{ $selectedDocument['id'] }}/pages/{{ $pageSummary->page_number }}/blocks/{{ $section->block_id }}/image"
+                                                                    alt="블록 이미지"
+                                                                    class="max-w-full h-auto rounded border border-blue-200"
+                                                                    onerror="this.style.display='none'"
+                                                                >
+                                                            </div>
+                                                            @endif
+                                                            <!-- 원문 텍스트 -->
+                                                            <div class="text-xs text-gray-700">
+                                                                {{ $section->original_content }}
+                                                            </div>
                                                         </div>
+                                                        @endif
                                                     </div>
 
-                                                    <!-- AI 요약 -->
+                                                    <!-- 교정 (편집 가능) -->
                                                     <div>
                                                         <h5 class="text-xs font-semibold text-gray-700 mb-1 flex items-center justify-between">
                                                             <div class="flex items-center">
                                                                 <svg class="w-4 h-4 text-green-500 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path>
+                                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
                                                                 </svg>
-                                                                AI 요약
+                                                                교정
                                                             </div>
                                                             @if($section->versions->count() > 1)
                                                             <span class="text-xs text-gray-500">{{ $section->versions->count() }}개 버전</span>
                                                             @endif
                                                         </h5>
-                                                        <div class="p-2 bg-green-50 rounded text-xs text-gray-700">
-                                                            {{ $section->ai_summary }}
-                                                            @if($section->currentVersion)
-                                                            <div class="mt-1 pt-1 border-t border-green-200 text-xs text-green-600">
-                                                                {{ \App\Helpers\VersionHelper::formatVersion($section->current_version_number) }}
-                                                            </div>
-                                                            @endif
-                                                        </div>
-                                                    </div>
+                                                        <div class="space-y-2">
+                                                            <!-- 교정 입력 필드 -->
+                                                            <textarea
+                                                                wire:model.defer="editingContent.{{ $section->id }}"
+                                                                class="w-full p-2 bg-green-50 rounded text-xs text-gray-700 border border-green-200 focus:ring-2 focus:ring-green-500 focus:border-green-500 resize-vertical min-h-[100px]"
+                                                                placeholder="텍스트를 수정하세요..."
+                                                            >{{ $section->ai_summary }}</textarea>
 
-                                                    <!-- 도움되는 내용 -->
-                                                    <div>
-                                                        <h5 class="text-xs font-semibold text-gray-700 mb-1 flex items-center">
-                                                            <svg class="w-4 h-4 text-purple-500 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path>
-                                                            </svg>
-                                                            도움되는 내용
-                                                        </h5>
-                                                        <div class="p-2 bg-purple-50 rounded text-xs text-gray-700">
-                                                            {{ $section->helpful_content ?? 'N/A' }}
+                                                            <!-- 저장 버튼 + 버전 정보 -->
+                                                            <div class="flex items-center justify-between">
+                                                                <button
+                                                                    wire:click="saveCorrection('{{ $section->id }}')"
+                                                                    class="px-3 py-1 bg-green-600 text-white text-xs rounded hover:bg-green-700 transition-colors flex items-center space-x-1">
+                                                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                                                                    </svg>
+                                                                    <span>저장 (기본)</span>
+                                                                </button>
+
+                                                                @if($section->currentVersion)
+                                                                <div class="text-xs text-green-600">
+                                                                    {{ \App\Helpers\VersionHelper::formatVersion($section->current_version_number) }}
+                                                                </div>
+                                                                @endif
+                                                            </div>
                                                         </div>
                                                     </div>
                                                 </div>
