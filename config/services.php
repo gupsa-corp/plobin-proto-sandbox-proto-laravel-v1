@@ -39,4 +39,8 @@ return [
         'base_url' => env('OCR_API_BASE_URL', 'http://localhost:3100'),
     ],
 
+    'summary' => [
+        'base_url' => env('SUMMARY_API_BASE_URL', 'http://seoul.gupsa.net:7576'),
+    ],
+
 ];

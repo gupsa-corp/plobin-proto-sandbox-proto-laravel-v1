@@ -55,6 +55,10 @@ Route::get('/rfx/analysis/{documentId}', \App\Livewire\Rfx\DocumentAnalysis\Live
 Route::get('/rfx/documents/{documentId}/blocks', \App\Livewire\Rfx\DocumentBlocks\Livewire::class)->name('rfx.documents.blocks');
 Route::get('/rfx/documents/{documentId}/sections', \App\Livewire\Rfx\DocumentSections\Livewire::class)->name('rfx.documents.sections');
 
+// RFX Block Summary Pages
+Route::get('/rfx/block-summary', \App\Livewire\Rfx\BlockSummary\Livewire::class)->name('rfx.block-summary');
+Route::get('/rfx/block-summary/{documentId}', \App\Livewire\Rfx\BlockSummary\Livewire::class)->name('rfx.block-summary.detail');
+
 Route::get('/test', function () {
     return 'Test route works!';
 });
