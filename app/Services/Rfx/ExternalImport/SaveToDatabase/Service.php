@@ -31,6 +31,20 @@ class Service
                 $blocks = $pageData['ocr_result']['blocks'] ?? [];
 
                 foreach ($blocks as $index => $block) {
+                    // bbox 파싱: [[x1,y1], [x2,y2], [x3,y3], [x4,y4]] 형식
+                    $bbox = $block['bbox'] ?? null;
+                    $bboxX = null;
+                    $bboxY = null;
+                    $bboxWidth = null;
+                    $bboxHeight = null;
+
+                    if ($bbox && is_array($bbox) && count($bbox) === 4) {
+                        $bboxX = $bbox[0][0]; // top-left X
+                        $bboxY = $bbox[0][1]; // top-left Y
+                        $bboxWidth = $bbox[1][0] - $bbox[0][0]; // width
+                        $bboxHeight = $bbox[2][1] - $bbox[0][1]; // height
+                    }
+
                     DB::table('rfx_document_assets')->insert([
                         'id' => Str::uuid()->toString(),
                         'analysis_request_id' => $requestId,
@@ -42,6 +56,11 @@ class Service
                         'content' => $block['text'] ?? '',
                         'page_number' => $pageNumber,
                         'confidence' => $block['confidence'] ?? 0,
+                        'bbox' => $bbox ? json_encode($bbox) : null,
+                        'bbox_x' => $bboxX,
+                        'bbox_y' => $bboxY,
+                        'bbox_width' => $bboxWidth,
+                        'bbox_height' => $bboxHeight,
                         'display_order' => $index,
                         'status' => 'completed',
                         'status_icon' => '✅',

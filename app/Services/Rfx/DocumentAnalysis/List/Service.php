@@ -4,23 +4,31 @@ namespace App\Services\Rfx\DocumentAnalysis\List;
 
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\DB;
 
 class Service
 {
     public function execute(array $filters = []): array
     {
         try {
+            // 1단계: DB에서 임포트된 데이터 조회
+            $importedRequests = $this->getImportedRequests();
+
+            // 2단계: FastAPI에서 데이터 조회
             $response = Http::get(config('services.ocr.base_url') . '/requests', [
                 'page' => 1,
                 'limit' => 100
             ]);
 
-            if (!$response->successful()) {
-                Log::error('OCR API 문서 목록 조회 실패');
-                return [];
+            $fastapiRequests = [];
+            if ($response->successful()) {
+                $fastapiRequests = $response->json()['requests'] ?? [];
+            } else {
+                Log::warning('OCR API 문서 목록 조회 실패');
             }
 
-            $requests = $response->json()['requests'] ?? [];
+            // 3단계: 두 소스의 데이터 병합 (중복 제거)
+            $requests = $this->mergeRequests($importedRequests, $fastapiRequests);
 
             // 검색 필터 적용
             if (!empty($filters['search'])) {
@@ -76,9 +84,47 @@ class Service
         return match($status) {
             'pending' => '대기',
             'processing' => '분석중',
+            'importing' => '임포트중',
             'completed' => '완료',
             'failed' => '오류',
             default => '대기'
         };
+    }
+
+    private function getImportedRequests(): array
+    {
+        $imports = DB::table('rfx_external_imports')
+            ->where('status', 'completed')
+            ->orderBy('imported_at', 'desc')
+            ->get();
+
+        return $imports->map(function($import) {
+            $metadata = json_decode($import->metadata, true);
+            return [
+                'request_id' => $import->request_id,
+                'original_filename' => $import->original_filename,
+                'status' => 'completed',
+                'completed_at' => $import->imported_at,
+                'file_type' => $metadata['file_type'] ?? 'pdf',
+                'total_pages' => $import->total_pages,
+                'total_blocks' => DB::table('rfx_document_assets')
+                    ->where('analysis_request_id', $import->request_id)
+                    ->count()
+            ];
+        })->toArray();
+    }
+
+    private function mergeRequests(array $importedRequests, array $fastapiRequests): array
+    {
+        $requestIds = array_column($importedRequests, 'request_id');
+
+        // FastAPI 데이터 중 DB에 없는 것만 추가
+        foreach ($fastapiRequests as $request) {
+            if (!in_array($request['request_id'], $requestIds)) {
+                $importedRequests[] = $request;
+            }
+        }
+
+        return $importedRequests;
     }
 }

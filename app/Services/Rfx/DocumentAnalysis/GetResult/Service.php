@@ -4,24 +4,29 @@ namespace App\Services\Rfx\DocumentAnalysis\GetResult;
 
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\DB;
 
 class Service
 {
     public function execute($documentId): array
     {
         try {
-            // 1단계: 요청 메타데이터 조회
+            // 1단계: DB에서 임포트된 데이터 우선 확인
+            $importedData = DB::table('rfx_external_imports')
+                ->where('request_id', $documentId)
+                ->first();
+
+            if ($importedData && $importedData->status === 'completed') {
+                // DB에서 가져온 데이터를 FastAPI 형식으로 변환
+                return $this->buildFromDatabase($documentId, $importedData);
+            }
+
+            // 2단계: DB에 없으면 FastAPI에서 조회
             $response = Http::get(config('services.ocr.base_url') . "/requests/{$documentId}");
 
             if (!$response->successful()) {
                 Log::error("OCR API 요청 상세 조회 실패: {$documentId}");
-                return [
-                    'summary' => '분석 결과를 불러올 수 없습니다.',
-                    'keywords' => [],
-                    'categories' => [],
-                    'extractedData' => [],
-                    'recommendations' => []
-                ];
+                throw new \Exception("문서를 찾을 수 없습니다. Request ID: {$documentId}");
             }
 
             $data = $response->json();
@@ -166,5 +171,90 @@ class Service
         }
 
         return $data;
+    }
+
+    private function buildFromDatabase(string $documentId, $importedData): array
+    {
+        // metadata와 summary 파싱
+        $metadata = json_decode($importedData->metadata, true);
+        $summary = json_decode($importedData->summary, true);
+
+        // DB에서 document_assets 조회
+        $assets = DB::table('rfx_document_assets')
+            ->where('analysis_request_id', $documentId)
+            ->orderBy('page_number')
+            ->orderBy('display_order')
+            ->get();
+
+        // 페이지별로 블록 그룹핑
+        $pageGroups = $assets->groupBy('page_number');
+        $pagesWithBlocks = [];
+        $allBlocks = [];
+
+        foreach ($pageGroups as $pageNumber => $blocks) {
+            $blocksArray = [];
+            $confidences = [];
+
+            foreach ($blocks as $block) {
+                $blockData = [
+                    'text' => $block->content,
+                    'confidence' => $block->confidence,
+                    'bbox' => $block->bbox ? json_decode($block->bbox, true) : [],
+                    'block_type' => $block->asset_type,
+                    'block_id' => $block->asset_id,
+                    'parent_id' => null,
+                    'children' => [],
+                    'level' => 0,
+                    'image_url' => null,
+                    'bbox_x' => $block->bbox_x,
+                    'bbox_y' => $block->bbox_y,
+                    'bbox_width' => $block->bbox_width,
+                    'bbox_height' => $block->bbox_height
+                ];
+
+                $blocksArray[] = $blockData;
+                $allBlocks[] = $blockData;
+                $confidences[] = $block->confidence;
+            }
+
+            $avgConfidence = count($confidences) > 0 ? array_sum($confidences) / count($confidences) : 0;
+
+            $pagesWithBlocks[] = [
+                'page_number' => $pageNumber,
+                'total_blocks' => count($blocksArray),
+                'average_confidence' => $avgConfidence,
+                'processing_time' => 0,
+                'visualization_url' => null,
+                'blocks' => $blocksArray
+            ];
+        }
+
+        // 텍스트 추출
+        $extractedTexts = array_map(function($block) {
+            return $block['text'] ?? '';
+        }, $allBlocks);
+
+        // OCR 원본 데이터 구성 (FastAPI 형식)
+        $ocrRawData = [
+            'request_id' => $documentId,
+            'original_filename' => $metadata['original_filename'] ?? $importedData->original_filename,
+            'file_type' => $metadata['file_type'] ?? 'pdf',
+            'file_size' => $metadata['file_size'] ?? 0,
+            'status' => 'completed',
+            'created_at' => $metadata['created_at'] ?? null,
+            'completed_at' => $metadata['completed_at'] ?? $importedData->imported_at,
+            'total_pages' => $importedData->total_pages,
+            'total_processing_time' => $summary['total_processing_time'] ?? null,
+            'pages' => $pagesWithBlocks
+        ];
+
+        return [
+            'summary' => $this->generateSummary($extractedTexts),
+            'keywords' => $this->extractKeywords($extractedTexts),
+            'categories' => $this->classifyDocument($ocrRawData),
+            'extractedData' => $this->extractStructuredData($allBlocks),
+            'recommendations' => [],
+            'ocrRawData' => $ocrRawData
+        ];
     }
 }

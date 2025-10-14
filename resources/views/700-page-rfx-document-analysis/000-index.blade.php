@@ -561,12 +561,21 @@
                                             <div class="p-3 bg-gray-50 rounded-lg border border-gray-200 hover:border-blue-300 transition">
                                                 <div class="flex items-start gap-3">
                                                     <!-- 블록 이미지 -->
-                                                    @if(isset($block['image_url']))
+                                                    @if(isset($block['bbox_x']) && isset($block['bbox_y']) && isset($block['bbox_width']) && isset($block['bbox_height']))
+                                                    <div class="flex-shrink-0">
+                                                        <img
+                                                            src="{{ config('services.ocr.base_url') }}/requests/{{ $analysisResult['ocrRawData']['request_id'] }}/pages/{{ $page['page_number'] }}/crop?x={{ $block['bbox_x'] }}&y={{ $block['bbox_y'] }}&width={{ $block['bbox_width'] }}&height={{ $block['bbox_height'] }}&padding=5"
+                                                            alt="Block #{{ $index + 1 }}"
+                                                            class="w-24 h-auto object-contain bg-white border border-gray-300 rounded shadow-sm"
+                                                            onerror="this.parentElement.innerHTML='<div class=\'w-24 h-24 bg-gray-200 rounded flex items-center justify-center text-xs text-gray-500\'>이미지 없음</div>'"
+                                                        >
+                                                    </div>
+                                                    @elseif(isset($block['image_url']))
                                                     <div class="flex-shrink-0">
                                                         <img
                                                             src="{{ $block['image_url'] }}"
                                                             alt="Block #{{ $index + 1 }}"
-                                                            class="w-24 h-24 object-contain bg-white border border-gray-300 rounded"
+                                                            class="w-24 h-auto object-contain bg-white border border-gray-300 rounded shadow-sm"
                                                             onerror="this.parentElement.innerHTML='<div class=\'w-24 h-24 bg-gray-200 rounded flex items-center justify-center text-xs text-gray-500\'>이미지 없음</div>'"
                                                         >
                                                     </div>
@@ -595,16 +604,25 @@
                                                             {{ $block['text'] ?? '(텍스트 없음)' }}
                                                         </div>
 
-                                                        @if(isset($block['bbox']) || isset($block['font_size']) || isset($block['font_family']))
+                                                        @if(isset($block['bbox_x']) || isset($block['bbox']) || isset($block['font_size']) || isset($block['font_family']))
                                                         <div class="grid grid-cols-2 gap-2 text-xs text-gray-600">
-                                                            @if(isset($block['bbox']))
+                                                            @if(isset($block['bbox_x']) && isset($block['bbox_y']))
                                                             <div>
                                                                 <span class="text-gray-500">위치:</span>
-                                                                <span class="font-mono">x:{{ $block['bbox']['x'] ?? 'N/A' }}, y:{{ $block['bbox']['y'] ?? 'N/A' }}</span>
+                                                                <span class="font-mono">x:{{ $block['bbox_x'] }}, y:{{ $block['bbox_y'] }}</span>
                                                             </div>
                                                             <div>
                                                                 <span class="text-gray-500">크기:</span>
-                                                                <span class="font-mono">{{ $block['bbox']['width'] ?? 'N/A' }}×{{ $block['bbox']['height'] ?? 'N/A' }}</span>
+                                                                <span class="font-mono">{{ $block['bbox_width'] ?? 0 }}×{{ $block['bbox_height'] ?? 0 }}</span>
+                                                            </div>
+                                                            @elseif(isset($block['bbox']) && is_array($block['bbox']) && count($block['bbox']) === 4)
+                                                            <div>
+                                                                <span class="text-gray-500">위치:</span>
+                                                                <span class="font-mono">x:{{ $block['bbox'][0][0] }}, y:{{ $block['bbox'][0][1] }}</span>
+                                                            </div>
+                                                            <div>
+                                                                <span class="text-gray-500">크기:</span>
+                                                                <span class="font-mono">{{ $block['bbox'][1][0] - $block['bbox'][0][0] }}×{{ $block['bbox'][2][1] - $block['bbox'][0][1] }}</span>
                                                             </div>
                                                             @endif
                                                             @if(isset($block['font_size']))
