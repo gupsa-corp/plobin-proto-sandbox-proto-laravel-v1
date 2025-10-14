@@ -155,47 +155,144 @@
                         </div>
                         @endif
 
-                        <!-- 블록 목록 -->
-                        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                            <h3 class="text-lg font-semibold text-gray-900 mb-4">문서 블록 ({{ count($blocks) }}개)</h3>
+                        <!-- 페이지별 블록 목록 -->
+                        @if($savedSummary)
+                            <!-- 저장된 데이터가 있는 경우: DB에서 로드한 페이지별 섹션 표시 -->
+                            @foreach($savedSummary->pageSummaries as $pageSummary)
+                            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
+                                <div class="flex items-center justify-between mb-4">
+                                    <h3 class="text-lg font-semibold text-gray-900 flex items-center space-x-2">
+                                        <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                                        </svg>
+                                        <span>페이지 {{ $pageSummary->page_number }} ({{ $pageSummary->block_count }}개 블록)</span>
+                                    </h3>
+                                </div>
 
-                            <div class="space-y-3">
-                                @forelse($blocks as $index => $block)
-                                <div class="p-4 bg-gray-50 rounded-lg border border-gray-200 hover:border-blue-300 transition">
-                                    <div class="flex items-start gap-3">
-                                        <div class="flex-shrink-0">
-                                            <span class="px-2 py-1 bg-blue-100 text-blue-800 rounded text-xs font-semibold">
-                                                #{{ $index + 1 }}
-                                            </span>
-                                        </div>
-                                        <div class="flex-1 min-w-0">
-                                            <div class="text-sm text-gray-900 font-medium mb-1">
-                                                {{ $block['text'] ?? '(텍스트 없음)' }}
+                                <!-- 페이지 AI 요약 -->
+                                <div class="mb-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
+                                    <h4 class="text-sm font-semibold text-gray-900 mb-2">페이지 AI 요약</h4>
+                                    <p class="text-sm text-gray-800 leading-relaxed">{{ $pageSummary->ai_summary }}</p>
+                                </div>
+
+                                <!-- 섹션 목록 -->
+                                <div class="space-y-3">
+                                    @foreach($pageSummary->sectionAnalyses as $section)
+                                    <div class="p-4 bg-gray-50 rounded-lg border-l-4 border-purple-400">
+                                        <div class="flex items-start gap-3">
+                                            <div class="flex-shrink-0">
+                                                <span class="text-lg">{{ $section->asset_type_icon }}</span>
                                             </div>
-                                            <div class="flex items-center space-x-3 text-xs text-gray-600">
-                                                @if(isset($block['block_type']))
-                                                <span class="px-2 py-0.5 bg-gray-200 rounded">{{ $block['block_type'] }}</span>
-                                                @endif
-                                                @if(isset($block['confidence']))
-                                                <span class="px-2 py-0.5 rounded
-                                                    {{ $block['confidence'] >= 0.9 ? 'bg-green-100 text-green-800' : ($block['confidence'] >= 0.7 ? 'bg-yellow-100 text-yellow-800' : 'bg-red-100 text-red-800') }}">
-                                                    신뢰도 {{ round($block['confidence'] * 100, 1) }}%
-                                                </span>
-                                                @endif
-                                                @if(isset($block['page_number']))
-                                                <span>페이지 {{ $block['page_number'] }}</span>
-                                                @endif
+                                            <div class="flex-1 min-w-0">
+                                                <div class="font-medium text-gray-900 mb-2">{{ $section->section_title }}</div>
+
+                                                <!-- 3단 그리드: 원문 | AI 요약 | 도움되는 내용 -->
+                                                <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                                                    <!-- 원문 -->
+                                                    <div>
+                                                        <h5 class="text-xs font-semibold text-gray-700 mb-1 flex items-center">
+                                                            <svg class="w-4 h-4 text-blue-500 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                                                            </svg>
+                                                            원문
+                                                        </h5>
+                                                        <div class="p-2 bg-blue-50 rounded text-xs text-gray-700">
+                                                            {{ $section->original_content }}
+                                                        </div>
+                                                    </div>
+
+                                                    <!-- AI 요약 -->
+                                                    <div>
+                                                        <h5 class="text-xs font-semibold text-gray-700 mb-1 flex items-center justify-between">
+                                                            <div class="flex items-center">
+                                                                <svg class="w-4 h-4 text-green-500 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path>
+                                                                </svg>
+                                                                AI 요약
+                                                            </div>
+                                                            @if($section->versions->count() > 1)
+                                                            <span class="text-xs text-gray-500">{{ $section->versions->count() }}개 버전</span>
+                                                            @endif
+                                                        </h5>
+                                                        <div class="p-2 bg-green-50 rounded text-xs text-gray-700">
+                                                            {{ $section->ai_summary }}
+                                                            @if($section->currentVersion)
+                                                            <div class="mt-1 pt-1 border-t border-green-200 text-xs text-green-600">
+                                                                {{ \App\Helpers\VersionHelper::formatVersion($section->current_version_number) }}
+                                                            </div>
+                                                            @endif
+                                                        </div>
+                                                    </div>
+
+                                                    <!-- 도움되는 내용 -->
+                                                    <div>
+                                                        <h5 class="text-xs font-semibold text-gray-700 mb-1 flex items-center">
+                                                            <svg class="w-4 h-4 text-purple-500 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path>
+                                                            </svg>
+                                                            도움되는 내용
+                                                        </h5>
+                                                        <div class="p-2 bg-purple-50 rounded text-xs text-gray-700">
+                                                            {{ $section->helpful_content ?? 'N/A' }}
+                                                        </div>
+                                                    </div>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
+                                    @endforeach
                                 </div>
-                                @empty
+                            </div>
+                            @endforeach
+
+                        @elseif(count($pageGroups) > 0)
+                            <!-- 저장되지 않은 데이터: 페이지별로 그룹화된 블록만 표시 -->
+                            @foreach($pageGroups as $pageGroup)
+                            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
+                                <h3 class="text-lg font-semibold text-gray-900 flex items-center space-x-2 mb-4">
+                                    <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                                    </svg>
+                                    <span>페이지 {{ $pageGroup['page_number'] }} ({{ $pageGroup['block_count'] }}개 블록)</span>
+                                </h3>
+
+                                <div class="space-y-3">
+                                    @foreach($pageGroup['blocks'] as $index => $block)
+                                    <div class="p-4 bg-gray-50 rounded-lg border border-gray-200">
+                                        <div class="flex items-start gap-3">
+                                            <span class="px-2 py-1 bg-blue-100 text-blue-800 rounded text-xs font-semibold">
+                                                #{{ $index + 1 }}
+                                            </span>
+                                            <div class="flex-1 min-w-0">
+                                                <div class="text-sm text-gray-900 font-medium mb-1">
+                                                    {{ $block['text'] ?? '(텍스트 없음)' }}
+                                                </div>
+                                                <div class="flex items-center space-x-3 text-xs text-gray-600">
+                                                    @if(isset($block['block_type']))
+                                                    <span class="px-2 py-0.5 bg-gray-200 rounded">{{ $block['block_type'] }}</span>
+                                                    @endif
+                                                    @if(isset($block['confidence']))
+                                                    <span class="px-2 py-0.5 rounded {{ $block['confidence'] >= 0.9 ? 'bg-green-100 text-green-800' : ($block['confidence'] >= 0.7 ? 'bg-yellow-100 text-yellow-800' : 'bg-red-100 text-red-800') }}">
+                                                        신뢰도 {{ round($block['confidence'] * 100, 1) }}%
+                                                    </span>
+                                                    @endif
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    @endforeach
+                                </div>
+                            </div>
+                            @endforeach
+
+                        @else
+                            <!-- 블록 데이터가 없는 경우 -->
+                            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
                                 <div class="text-center text-gray-500 py-8">
                                     블록 데이터가 없습니다
                                 </div>
-                                @endforelse
                             </div>
-                        </div>
+                        @endif
                     </div>
                 </div>
             </div>
