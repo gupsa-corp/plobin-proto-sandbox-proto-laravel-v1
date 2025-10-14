@@ -218,11 +218,7 @@
                                                                 @endforeach
                                                             </select>
 
-                                                            <!-- 선택한 버전의 교정 내용 표시 (좌측) -->
-                                                            @php
-                                                                $selectedVersionId = isset($selectedVersions[$section->id]) ? $selectedVersions[$section->id] : ($section->currentVersion ? $section->currentVersion->id : null);
-                                                                $displayVersion = $selectedVersionId ? $section->versions->firstWhere('id', $selectedVersionId) : $section->currentVersion;
-                                                            @endphp
+                                                            <!-- 원문 내용 표시 (좌측) - 버전과 무관하게 항상 original_content -->
                                                             <div class="p-2 bg-blue-50 rounded border border-blue-200">
                                                                 <!-- 블록 이미지 -->
                                                                 @if(isset($section->block_id) && $section->block_id !== 'unknown')
@@ -235,9 +231,9 @@
                                                                     >
                                                                 </div>
                                                                 @endif
-                                                                <!-- 선택한 버전의 교정 텍스트 (좌측에서 변경됨) -->
+                                                                <!-- 원문 텍스트 (버전 선택과 무관하게 항상 동일) -->
                                                                 <div class="text-xs text-gray-700 whitespace-pre-wrap">
-                                                                    {{ $displayVersion ? $displayVersion->ai_summary : $section->ai_summary }}
+                                                                    {{ $section->original_content }}
                                                                 </div>
                                                             </div>
                                                         </div>
