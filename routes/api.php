@@ -33,3 +33,6 @@ Route::put('/rfx/documents/{id}/blocks/{blockId}', \App\Http\Controllers\Rfx\Doc
 // RFX Document Sections API Routes
 Route::get('/rfx/documents/{id}/sections', \App\Http\Controllers\Rfx\DocumentSections\GetList\Controller::class)->name('api.rfx.documents.sections.list');
 Route::get('/rfx/documents/{id}/sections/{sectionId}', \App\Http\Controllers\Rfx\DocumentSections\GetDetail\Controller::class)->name('api.rfx.documents.sections.detail');
+
+// RFX External Import API Routes
+Route::post('/rfx/external-import', \App\Http\Controllers\Rfx\ExternalImport\ImportData\Controller::class);
