@@ -188,7 +188,7 @@
 
                                                 <!-- 2단 그리드: 원문 (이미지 포함) | 교정 (편집 가능) -->
                                                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                                                    <!-- 원문 (이미지 + 텍스트) 또는 버전 선택 -->
+                                                    <!-- 좌측: 버전 선택 시 교정 내용 표시 -->
                                                     <div>
                                                         @if($section->versions->count() > 1)
                                                         <!-- 버전이 2개 이상이면 드롭다운으로 표시 -->
@@ -203,47 +203,43 @@
                                                         </h5>
                                                         <div class="space-y-2">
                                                             <!-- 버전 드롭다운 -->
+                                                            @php
+                                                                $currentVersionId = $section->currentVersion ? $section->currentVersion->id : null;
+                                                            @endphp
                                                             <select
                                                                 wire:model.live="selectedVersions.{{ $section->id }}"
                                                                 class="w-full p-2 bg-blue-50 rounded text-xs text-gray-700 border border-blue-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                                                             >
                                                                 @foreach($section->versions->sortByDesc('created_at') as $version)
-                                                                <option value="{{ $version->id }}">
+                                                                <option value="{{ $version->id }}" {{ (!isset($selectedVersions[$section->id]) && $version->is_current) ? 'selected' : '' }}>
                                                                     {{ $version->version_display_name }}
                                                                     @if($version->is_current) (기본) @endif
                                                                 </option>
                                                                 @endforeach
                                                             </select>
 
-                                                            <!-- 선택된 버전의 내용 표시 -->
+                                                            <!-- 선택한 버전의 교정 내용 표시 (좌측) -->
                                                             @php
-                                                                $selectedVersionId = $selectedVersions[$section->id] ?? $section->currentVersion->id ?? null;
-                                                                $displayVersion = $section->versions->firstWhere('id', $selectedVersionId) ?? $section->currentVersion;
+                                                                $selectedVersionId = isset($selectedVersions[$section->id]) ? $selectedVersions[$section->id] : ($section->currentVersion ? $section->currentVersion->id : null);
+                                                                $displayVersion = $selectedVersionId ? $section->versions->firstWhere('id', $selectedVersionId) : $section->currentVersion;
                                                             @endphp
-                                                            @if($displayVersion)
                                                             <div class="p-2 bg-blue-50 rounded border border-blue-200">
+                                                                <!-- 블록 이미지 -->
+                                                                @if(isset($section->block_id) && $section->block_id !== 'unknown')
+                                                                <div class="mb-2">
+                                                                    <img
+                                                                        src="{{ config('services.ocr.base_url') }}/requests/{{ $selectedDocument['id'] }}/pages/{{ $pageSummary->page_number }}/blocks/{{ $section->block_id }}/image"
+                                                                        alt="블록 이미지"
+                                                                        class="max-w-full h-auto rounded border border-blue-200"
+                                                                        onerror="this.style.display='none'"
+                                                                    >
+                                                                </div>
+                                                                @endif
+                                                                <!-- 선택한 버전의 교정 텍스트 (좌측에서 변경됨) -->
                                                                 <div class="text-xs text-gray-700 whitespace-pre-wrap">
-                                                                    {{ $displayVersion->ai_summary }}
+                                                                    {{ $displayVersion ? $displayVersion->ai_summary : $section->ai_summary }}
                                                                 </div>
                                                             </div>
-
-                                                            <!-- 기본값 설정 버튼 -->
-                                                            @if(!$displayVersion->is_current)
-                                                            <button
-                                                                wire:click="setDefaultVersion('{{ $section->id }}', '{{ $displayVersion->id }}')"
-                                                                class="w-full px-3 py-1.5 bg-blue-600 text-white text-xs rounded hover:bg-blue-700 transition-colors flex items-center justify-center space-x-1"
-                                                            >
-                                                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-                                                                </svg>
-                                                                <span>이 버전을 기본값으로 설정</span>
-                                                            </button>
-                                                            @else
-                                                            <div class="text-xs text-center text-blue-600 font-medium">
-                                                                현재 기본 버전
-                                                            </div>
-                                                            @endif
-                                                            @endif
                                                         </div>
                                                         @else
                                                         <!-- 버전이 1개만 있으면 원문 표시 -->
@@ -273,7 +269,7 @@
                                                         @endif
                                                     </div>
 
-                                                    <!-- 교정 (편집 가능) -->
+                                                    <!-- 우측: 교정 입력 (편집 가능) -->
                                                     <div>
                                                         <h5 class="text-xs font-semibold text-gray-700 mb-1 flex items-center justify-between">
                                                             <div class="flex items-center">
@@ -287,12 +283,13 @@
                                                             @endif
                                                         </h5>
                                                         <div class="space-y-2">
-                                                            <!-- 교정 입력 필드 -->
+                                                            <!-- 교정 내용 입력 (편집 가능) -->
                                                             <textarea
                                                                 wire:model.defer="editingContent.{{ $section->id }}"
-                                                                class="w-full p-2 bg-green-50 rounded text-xs text-gray-700 border border-green-200 focus:ring-2 focus:ring-green-500 focus:border-green-500 resize-vertical min-h-[100px]"
-                                                                placeholder="텍스트를 수정하세요..."
-                                                            >{{ $section->ai_summary }}</textarea>
+                                                                placeholder="교정 내용을 입력하세요..."
+                                                                class="w-full p-2 bg-green-50 rounded border border-green-200 text-xs text-gray-700 min-h-[100px] focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                                                                rows="5"
+                                                            ></textarea>
 
                                                             <!-- 저장 버튼 + 버전 정보 -->
                                                             <div class="flex items-center justify-between">
