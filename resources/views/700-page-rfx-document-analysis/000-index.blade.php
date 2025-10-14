@@ -299,22 +299,29 @@
 
                     <!-- Document Preview - Side by Side -->
                     <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                        <h3 class="text-lg font-semibold text-gray-900 mb-4">문서 미리보기</h3>
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-lg font-semibold text-gray-900">문서 미리보기</h3>
+                            <div class="flex items-center space-x-2 text-sm text-gray-600">
+                                <span>페이지 {{ $currentPage }} / {{ $selectedDocument['pageCount'] }}</span>
+                            </div>
+                        </div>
+
                         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                             <!-- Original Image -->
                             <div>
                                 <div class="flex items-center justify-between mb-2">
                                     <h4 class="text-sm font-medium text-gray-700">원본 이미지</h4>
-                                    <button wire:click="downloadOriginal('{{ $selectedDocument['id'] }}', 1)" class="text-xs text-blue-600 hover:text-blue-800">
+                                    <button wire:click="downloadOriginal('{{ $selectedDocument['id'] }}', {{ $currentPage }})" class="text-xs text-blue-600 hover:text-blue-800">
                                         다운로드
                                     </button>
                                 </div>
                                 <div class="border border-gray-200 rounded-lg overflow-hidden bg-gray-50">
                                     <img
-                                        src="{{ config('services.ocr.base_url') }}/requests/{{ $selectedDocument['id'] }}/pages/1/original"
+                                        src="{{ config('services.ocr.base_url') }}/requests/{{ $selectedDocument['id'] }}/pages/{{ $currentPage }}/original"
                                         alt="원본 이미지"
                                         class="w-full h-auto"
                                         onerror="this.parentElement.innerHTML='<div class=\'p-8 text-center text-gray-500\'>이미지를 불러올 수 없습니다</div>'"
+                                        wire:key="original-{{ $currentPage }}"
                                     >
                                 </div>
                             </div>
@@ -323,20 +330,100 @@
                             <div>
                                 <div class="flex items-center justify-between mb-2">
                                     <h4 class="text-sm font-medium text-gray-700">OCR 분석 결과 (바운딩 박스 표시)</h4>
-                                    <button wire:click="downloadVisualization('{{ $selectedDocument['id'] }}', 1)" class="text-xs text-blue-600 hover:text-blue-800">
+                                    <button wire:click="downloadVisualization('{{ $selectedDocument['id'] }}', {{ $currentPage }})" class="text-xs text-blue-600 hover:text-blue-800">
                                         다운로드
                                     </button>
                                 </div>
                                 <div class="border border-gray-200 rounded-lg overflow-hidden bg-gray-50">
                                     <img
-                                        src="{{ config('services.ocr.base_url') }}/requests/{{ $selectedDocument['id'] }}/pages/1/visualization"
+                                        src="{{ config('services.ocr.base_url') }}/requests/{{ $selectedDocument['id'] }}/pages/{{ $currentPage }}/visualization"
                                         alt="시각화 이미지"
                                         class="w-full h-auto"
                                         onerror="this.parentElement.innerHTML='<div class=\'p-8 text-center text-gray-500\'>시각화 이미지를 불러올 수 없습니다</div>'"
+                                        wire:key="visualization-{{ $currentPage }}"
                                     >
                                 </div>
                             </div>
                         </div>
+
+                        <!-- Pagination Controls -->
+                        @if($selectedDocument['pageCount'] > 1)
+                        <div class="mt-6 flex items-center justify-between border-t border-gray-200 pt-4">
+                            <!-- Previous Button -->
+                            <button
+                                wire:click="previousPage()"
+                                {{ $currentPage <= 1 ? 'disabled' : '' }}
+                                class="px-4 py-2 text-sm font-medium rounded-lg border transition-colors {{ $currentPage <= 1 ? 'bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed' : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50' }}">
+                                <div class="flex items-center space-x-1">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+                                    </svg>
+                                    <span>이전</span>
+                                </div>
+                            </button>
+
+                            <!-- Page Numbers -->
+                            <div class="flex items-center space-x-1">
+                                @php
+                                    $totalPages = $selectedDocument['pageCount'];
+                                    $currentPage = $currentPage;
+
+                                    // 표시할 페이지 번호 계산
+                                    $startPage = max(1, $currentPage - 2);
+                                    $endPage = min($totalPages, $currentPage + 2);
+
+                                    // 5개 미만이면 범위 확장
+                                    if ($endPage - $startPage < 4) {
+                                        if ($currentPage <= 3) {
+                                            $endPage = min($totalPages, 5);
+                                        } else {
+                                            $startPage = max(1, $totalPages - 4);
+                                        }
+                                    }
+                                @endphp
+
+                                @if($startPage > 1)
+                                    <button wire:click="goToPage(1)" class="px-3 py-1.5 text-sm font-medium rounded border border-gray-300 hover:bg-gray-50">
+                                        1
+                                    </button>
+                                    @if($startPage > 2)
+                                        <span class="px-2 text-gray-500">...</span>
+                                    @endif
+                                @endif
+
+                                @for($i = $startPage; $i <= $endPage; $i++)
+                                    <button
+                                        wire:click="goToPage({{ $i }})"
+                                        class="px-3 py-1.5 text-sm font-medium rounded border transition-colors
+                                            {{ $i === $currentPage ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50' }}">
+                                        {{ $i }}
+                                    </button>
+                                @endfor
+
+                                @if($endPage < $totalPages)
+                                    @if($endPage < $totalPages - 1)
+                                        <span class="px-2 text-gray-500">...</span>
+                                    @endif
+                                    <button wire:click="goToPage({{ $totalPages }})" class="px-3 py-1.5 text-sm font-medium rounded border border-gray-300 hover:bg-gray-50">
+                                        {{ $totalPages }}
+                                    </button>
+                                @endif
+                            </div>
+
+                            <!-- Next Button -->
+                            <button
+                                wire:click="nextPage()"
+                                {{ $currentPage >= $selectedDocument['pageCount'] ? 'disabled' : '' }}
+                                class="px-4 py-2 text-sm font-medium rounded-lg border transition-colors {{ $currentPage >= $selectedDocument['pageCount'] ? 'bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed' : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50' }}">
+                                <div class="flex items-center space-x-1">
+                                    <span>다음</span>
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                                    </svg>
+                                </div>
+                            </button>
+                        </div>
+                        @endif
                     </div>
 
                     <!-- Summary -->
@@ -440,7 +527,10 @@
                             <!-- 페이지별 블록 정보 -->
                             @if(isset($analysisResult['ocrRawData']['pages']) && count($analysisResult['ocrRawData']['pages']) > 0)
                             <div class="space-y-3">
-                                <h4 class="text-sm font-semibold text-gray-900">페이지별 텍스트 블록</h4>
+                                <div class="flex items-center justify-between">
+                                    <h4 class="text-sm font-semibold text-gray-900">페이지별 텍스트 블록</h4>
+                                    <span class="text-xs text-gray-500">총 {{ count($analysisResult['ocrRawData']['pages']) }}개 페이지</span>
+                                </div>
                                 @foreach($analysisResult['ocrRawData']['pages'] as $page)
                                 <div x-data="{ open: false }" class="border border-gray-200 rounded-lg">
                                     <button

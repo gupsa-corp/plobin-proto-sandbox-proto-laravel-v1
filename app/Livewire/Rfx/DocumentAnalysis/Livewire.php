@@ -25,6 +25,7 @@ class Livewire extends Component
     public $snapshots = [];
     public $selectedSnapshotId = null;
     public $viewingSnapshot = false;
+    public $currentPage = 1;
 
     public function mount($documentId = null)
     {
@@ -62,9 +63,35 @@ class Livewire extends Component
         $this->loadSnapshots($documentId);
         $this->viewingSnapshot = false;
         $this->selectedSnapshotId = null;
+        $this->currentPage = 1; // 문서 선택 시 페이지 초기화
 
         // URL 업데이트 (브라우저 히스토리에 추가)
         $this->js("window.history.pushState({}, '', '/rfx/analysis/{$documentId}')");
+    }
+
+    public function goToPage($pageNumber)
+    {
+        $totalPages = $this->selectedDocument['pageCount'] ?? 1;
+
+        if ($pageNumber >= 1 && $pageNumber <= $totalPages) {
+            $this->currentPage = $pageNumber;
+        }
+    }
+
+    public function nextPage()
+    {
+        $totalPages = $this->selectedDocument['pageCount'] ?? 1;
+
+        if ($this->currentPage < $totalPages) {
+            $this->currentPage++;
+        }
+    }
+
+    public function previousPage()
+    {
+        if ($this->currentPage > 1) {
+            $this->currentPage--;
+        }
     }
 
     public function loadSnapshots($documentId)

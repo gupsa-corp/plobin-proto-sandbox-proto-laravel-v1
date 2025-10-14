@@ -11,7 +11,6 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Log;
-use App\Services\Rfx\OcrAnalysis\ProcessWithOntology\Service as OcrOntologyService;
 use romanzipp\QueueMonitor\Traits\IsMonitored;
 
 class Jobs implements ShouldQueue
@@ -79,20 +78,6 @@ class Jobs implements ShouldQueue
                     'result' => json_encode($ocrResult),
                     'completed_at' => now(),
                 ]);
-
-            // OCR Ontology API 호출하여 섹션 생성
-            $ocrOntologyService = new OcrOntologyService();
-            $ontologyResult = $ocrOntologyService->execute($this->filePath, (string)$this->requestId);
-
-            if ($ontologyResult['success']) {
-                Log::info("OCR Ontology analysis completed for request ID: {$this->requestId}", [
-                    'assets_count' => $ontologyResult['assets_count'] ?? 0
-                ]);
-            } else {
-                Log::warning("OCR Ontology analysis failed for request ID: {$this->requestId}", [
-                    'error' => $ontologyResult['error'] ?? 'Unknown error'
-                ]);
-            }
 
             Log::info("OCR analysis completed for request ID: {$this->requestId}");
 

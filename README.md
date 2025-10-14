@@ -7,6 +7,49 @@
 <a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
 </p>
 
+## Plobin Proto Sandbox - Laravel v1.2
+
+RFX 파일 업로드 및 OCR 처리 시스템
+
+### 서버 실행 방법
+
+```bash
+# 1. 라라벨 서버 시작
+php artisan serve --host=localhost --port=1255
+
+# 2. OCR API 서버 시작 (Python FastAPI)
+cd /path/to/ocr-api
+uvicorn main:app --host 0.0.0.0 --port 6003
+
+# 3. 큐 워커 시작 (백그라운드 OCR 처리)
+./start-queue-worker.sh
+```
+
+### 큐 워커 관리
+
+```bash
+# 큐 워커 시작 (백그라운드)
+./start-queue-worker.sh
+
+# 큐 워커 상태 확인
+ps aux | grep "queue:work"
+
+# 큐 워커 종료
+pkill -f "queue:work"
+
+# 큐 워커 로그 확인
+tail -f storage/logs/queue.log
+```
+
+### 주요 기능
+
+- 파일 업로드 (원본 파일명 유지, UUID는 DB에 저장)
+- OCR 처리 (큐 기반 비동기 처리)
+- 실시간 처리 상태 모니터링
+- Livewire 기반 반응형 UI
+
+---
+
 ## About Laravel
 
 Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:

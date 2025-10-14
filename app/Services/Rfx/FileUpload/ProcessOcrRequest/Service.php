@@ -14,23 +14,30 @@ class Service
         try {
             Log::info('ProcessOcrRequest 시작', ['data_keys' => array_keys($data)]);
 
-            $storedName = '';
+            $originalName = '';
             $filePath = '';
 
-            // 저장된 파일명으로 받은 경우 (기본)
-            if (isset($data['stored_name'])) {
-                $storedName = $data['stored_name'];
-                $filePath = Storage::disk('plobin_uploads')->path($storedName);
-                Log::info('저장된 파일명으로 처리', ['stored_name' => $storedName, 'file_path' => $filePath]);
+            // 파일 경로와 원본 파일명으로 받은 경우 (기본)
+            if (isset($data['file_path']) && isset($data['original_name'])) {
+                $relativePath = $data['file_path'];
+                $originalName = $data['original_name'];
+                $filePath = Storage::disk('plobin_uploads')->path($relativePath);
+                Log::info('파일 경로와 원본 파일명으로 처리', [
+                    'original_name' => $originalName,
+                    'file_path' => $filePath
+                ]);
 
                 if (!file_exists($filePath)) {
                     throw new \Exception("파일이 존재하지 않습니다: {$filePath}");
                 }
             }
-            // 파일 경로로 받은 경우 (하위 호환성)
+            // 파일 경로만 받은 경우 (하위 호환성)
             elseif (isset($data['file_path'])) {
                 $filePath = $data['file_path'];
-                $storedName = basename($filePath);
+                $originalName = basename($filePath);
+                if (!str_starts_with($filePath, '/')) {
+                    $filePath = Storage::disk('plobin_uploads')->path($filePath);
+                }
                 Log::info('파일 경로로 처리', ['file_path' => $filePath]);
 
                 if (!file_exists($filePath)) {
@@ -41,7 +48,7 @@ class Service
             elseif (isset($data['file'])) {
                 $file = $data['file'];
                 $filePath = $file->getRealPath();
-                $storedName = $file->getClientOriginalName();
+                $originalName = $file->getClientOriginalName();
                 Log::info('Livewire 파일 객체로 처리', ['real_path' => $filePath]);
 
                 if (empty($filePath) || !file_exists($filePath)) {
@@ -56,12 +63,12 @@ class Service
             $jobId = Str::uuid()->toString();
 
             // 큐에 OCR 처리 작업 등록
-            ProcessOcrJob::dispatch($filePath, $storedName, $jobId);
+            ProcessOcrJob::dispatch($filePath, $originalName, $jobId);
 
             Log::info('OCR 처리 작업이 큐에 등록되었습니다', [
                 'job_id' => $jobId,
                 'file_path' => $filePath,
-                'stored_name' => $storedName
+                'original_name' => $originalName
             ]);
 
             return [

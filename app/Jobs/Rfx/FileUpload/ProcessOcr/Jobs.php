@@ -16,13 +16,13 @@ class Jobs implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels, IsMonitored;
 
     protected string $filePath;
-    protected string $storedName;
+    protected string $originalName;
     protected string $jobId;
 
-    public function __construct(string $filePath, string $storedName, string $jobId)
+    public function __construct(string $filePath, string $originalName, string $jobId)
     {
         $this->filePath = $filePath;
-        $this->storedName = $storedName;
+        $this->originalName = $originalName;
         $this->jobId = $jobId;
     }
 
@@ -35,22 +35,15 @@ class Jobs implements ShouldQueue
 
             $fileContents = file_get_contents($this->filePath);
 
-            // 파일 확장자에 따라 적절한 엔드포인트 선택
-            $extension = strtolower(pathinfo($this->storedName, PATHINFO_EXTENSION));
+            // OCR API 통합 엔드포인트 사용
+            $extension = strtolower(pathinfo($this->originalName, PATHINFO_EXTENSION));
             $baseUrl = config('services.ocr.base_url');
-
-            if ($extension === 'pdf') {
-                $ocrUrl = $baseUrl . '/process-pdf';
-            } elseif (in_array($extension, ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'tiff', 'webp'])) {
-                $ocrUrl = $baseUrl . '/process-image';
-            } else {
-                $ocrUrl = $baseUrl . '/process-document';
-            }
+            $ocrUrl = $baseUrl . '/process-request';
 
             Log::info('OCR API 호출 시작', [
                 'job_id' => $this->jobId,
                 'url' => $ocrUrl,
-                'file_name' => $this->storedName,
+                'file_name' => $this->originalName,
                 'extension' => $extension
             ]);
 
@@ -58,7 +51,7 @@ class Jobs implements ShouldQueue
                 ->attach(
                     'file',
                     $fileContents,
-                    $this->storedName
+                    $this->originalName
                 )
                 ->post($ocrUrl);
 
@@ -75,14 +68,14 @@ class Jobs implements ShouldQueue
 
             Log::info('OCR 처리 완료', [
                 'job_id' => $this->jobId,
-                'file_name' => $this->storedName,
+                'file_name' => $this->originalName,
                 'ocr_result' => $ocrResult
             ]);
 
         } catch (\Exception $e) {
             Log::error('OCR 처리 실패', [
                 'job_id' => $this->jobId,
-                'file_name' => $this->storedName,
+                'file_name' => $this->originalName,
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);

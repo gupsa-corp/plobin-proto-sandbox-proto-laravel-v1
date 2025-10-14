@@ -13,8 +13,8 @@ return new class extends Migration
     {
         Schema::create('plobin_uploaded_files', function (Blueprint $table) {
             $table->id();
+            $table->uuid('uuid')->unique();
             $table->string('original_name');
-            $table->string('stored_name');
             $table->string('file_path');
             $table->string('mime_type');
             $table->unsignedBigInteger('file_size');
@@ -25,9 +25,10 @@ return new class extends Migration
             $table->unsignedInteger('download_count')->default(0);
             $table->timestamp('analyzed_at')->nullable();
             $table->timestamps();
-            
+
             $table->index(['status', 'created_at']);
             $table->index('uploaded_by');
+            $table->index('uuid');
         });
     }
 

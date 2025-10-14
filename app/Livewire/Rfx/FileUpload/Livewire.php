@@ -35,7 +35,7 @@ class Livewire extends Component
     public function uploadFiles()
     {
         $this->validate([
-            'files.*' => 'required|file|mimes:jpg,jpeg,png,pdf|max:10240',
+            'files.*' => 'required|file|max:10240',
         ]);
 
         $uploadService = new Service();
@@ -47,6 +47,8 @@ class Livewire extends Component
             // 1단계: 파일 업로드
             $uploadResult = $uploadService->execute(['file' => $file]);
 
+            \Log::info('Upload Result', ['upload_result' => $uploadResult]);
+
             if (!$uploadResult['success']) {
                 session()->flash('error', '파일 업로드 실패: ' . $uploadResult['message']);
                 continue;
@@ -55,12 +57,30 @@ class Livewire extends Component
             $this->uploadProgress[$index] = 50;
 
             // 2단계: OCR 처리 요청
-            $storedName = $uploadResult['data']['stored_name'] ?? '';
-            if ($storedName) {
-                $ocrResult = $ocrService->execute(['stored_name' => $storedName]);
+            $filePath = $uploadResult['data']['file_path'] ?? '';
+            $originalName = $uploadResult['data']['name'] ?? '';
+
+            \Log::info('OCR Request Data', [
+                'file_path' => $filePath,
+                'original_name' => $originalName
+            ]);
+
+            if ($filePath && $originalName) {
+                $ocrResult = $ocrService->execute([
+                    'file_path' => $filePath,
+                    'original_name' => $originalName
+                ]);
+
+                \Log::info('OCR Result', ['ocr_result' => $ocrResult]);
+
                 if ($ocrResult['success']) {
                     $this->uploadProgress[$index] = 100;
                 }
+            } else {
+                \Log::warning('OCR Request Skipped', [
+                    'file_path_exists' => !empty($filePath),
+                    'original_name_exists' => !empty($originalName)
+                ]);
             }
         }
 
@@ -82,15 +102,15 @@ class Livewire extends Component
     public function loadUploadInfo()
     {
         $this->guidelines = [
-            '이미지 파일(JPG, PNG) 또는 PDF 파일만 업로드 가능합니다.',
+            '모든 파일 형식을 업로드할 수 있습니다.',
             '파일 크기는 최대 10MB까지 가능합니다.',
-            'OCR 처리는 업로드 후 자동으로 시작됩니다.',
+            'OCR 처리는 이미지와 PDF 파일에 대해 자동으로 시작됩니다.',
             '처리 결과는 요청 목록에서 확인할 수 있습니다.'
         ];
 
         $this->supportedFormats = [
-            '이미지' => ['jpg', 'jpeg', 'png'],
-            'PDF' => ['pdf']
+            '권장 형식' => ['이미지 (jpg, png)', 'PDF'],
+            '기타' => ['모든 파일 형식 지원']
         ];
 
         $this->maxFileSize = '10MB';

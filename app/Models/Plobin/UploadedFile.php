@@ -12,8 +12,8 @@ class UploadedFile extends Model
     protected $table = 'plobin_uploaded_files';
     
     protected $fillable = [
+        'uuid',
         'original_name',
-        'stored_name',
         'file_path',
         'mime_type',
         'file_size',

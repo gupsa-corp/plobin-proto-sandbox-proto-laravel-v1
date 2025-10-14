@@ -26,20 +26,39 @@ class Service
             }
             
             $originalName = $file->getClientOriginalName();
-            $storedName = Str::uuid() . '_' . $originalName;
+            $uuid = (string) Str::uuid();
             $mimeType = $file->getClientMimeType();
             $fileSize = $file->getSize();
-            
-            $filePath = $file->storeAs('', $storedName, 'plobin_uploads');
-            
+
+            $filePath = $file->storeAs('', $originalName, 'plobin_uploads');
+
+            // plobin_users 테이블에 기본 사용자가 없으면 생성
+            $defaultUser = \Illuminate\Support\Facades\DB::table('plobin_users')
+                ->where('email', 'admin@example.com')
+                ->first();
+
+            if (!$defaultUser) {
+                \Illuminate\Support\Facades\DB::table('plobin_users')->insert([
+                    'email' => 'admin@example.com',
+                    'name' => 'Admin User',
+                    'role' => 'admin',
+                    'is_active' => true,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+                $defaultUser = \Illuminate\Support\Facades\DB::table('plobin_users')
+                    ->where('email', 'admin@example.com')
+                    ->first();
+            }
+
             $uploadedFile = UploadedFile::create([
+                'uuid' => $uuid,
                 'original_name' => $originalName,
-                'stored_name' => $storedName,
                 'file_path' => $filePath,
                 'mime_type' => $mimeType,
                 'file_size' => $fileSize,
                 'status' => 'uploaded',
-                'uploaded_by' => 1, // 기본 테스트 사용자 ID
+                'uploaded_by' => $defaultUser->id,
                 'tags' => $tags,
                 'description' => $description
             ]);
@@ -49,8 +68,8 @@ class Service
             
             return Response::success([
                 'id' => $uploadedFile->id,
+                'uuid' => $uploadedFile->uuid,
                 'name' => $uploadedFile->original_name,
-                'stored_name' => $uploadedFile->stored_name,
                 'file_path' => $uploadedFile->file_path,
                 'size' => $uploadedFile->formatted_file_size,
                 'type' => $fileExtension,
