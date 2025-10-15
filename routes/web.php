@@ -6,6 +6,9 @@ Route::get('/', function () {
     return view('700-page-dashboard/000-index');
 })->name('dashboard');
 
+// SSO Test Page
+Route::get('/sso/test', \App\Livewire\Sso\Test\Livewire::class)->name('sso.test');
+
 // Queue Monitor Routes
 // Route::queueMonitor();
 
