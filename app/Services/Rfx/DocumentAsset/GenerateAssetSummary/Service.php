@@ -8,10 +8,14 @@ use Illuminate\Support\Str;
 
 class Service
 {
-    private const AI_API_URL = 'http://localhost:6003/analysis/generate-summary';
-
     public function execute(string $assetId): array
     {
+        // OCR API URL 환경변수 검증
+        $ocrBaseUrl = env('OCR_API_BASE_URL');
+        if (!$ocrBaseUrl) {
+            throw new \RuntimeException('OCR_API_BASE_URL 환경변수가 설정되지 않았습니다.');
+        }
+
         DB::beginTransaction();
 
         try {
@@ -29,7 +33,7 @@ class Service
 
             // 2. AI API 호출하여 요약 생성 (실패 시 더미 데이터 사용)
             try {
-                $response = Http::timeout(5)->post(self::AI_API_URL, [
+                $response = Http::timeout(5)->post($ocrBaseUrl . '/analysis/generate-summary', [
                     'content' => $asset->content,
                     'asset_type' => $asset->asset_type,
                     'section_title' => $asset->section_title,

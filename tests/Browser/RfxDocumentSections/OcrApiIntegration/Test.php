@@ -12,7 +12,11 @@ class Test extends DuskTestCase
     {
         // OCR API 직접 호출 테스트
         $requestId = '0199d940-9d0e-71ba-bf78-8d6b1220633a';
-        $ocrBaseUrl = config('services.ocr.base_url', 'http://localhost:6003');
+        $ocrBaseUrl = env('OCR_API_BASE_URL');
+
+        if (!$ocrBaseUrl) {
+            $this->fail('OCR_API_BASE_URL 환경변수가 설정되지 않았습니다.');
+        }
 
         $response = Http::timeout(30)->get("{$ocrBaseUrl}/requests/{$requestId}/pages/1/blocks", [
             'limit' => 1000

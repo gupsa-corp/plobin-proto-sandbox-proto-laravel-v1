@@ -6,12 +6,16 @@ use Illuminate\Support\Facades\Http;
 
 class Service
 {
-    private const API_BASE_URL = 'http://localhost:6003';
-
     public function execute(): array
     {
+        // OCR API URL 환경변수 검증
+        $ocrBaseUrl = env('OCR_API_BASE_URL');
+        if (!$ocrBaseUrl) {
+            throw new \RuntimeException('OCR_API_BASE_URL 환경변수가 설정되지 않았습니다.');
+        }
+
         try {
-            $response = Http::get(self::API_BASE_URL . '/analysis/asset-types');
+            $response = Http::get($ocrBaseUrl . '/analysis/asset-types');
 
             if (!$response->successful()) {
                 return [
