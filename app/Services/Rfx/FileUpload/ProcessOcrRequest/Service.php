@@ -14,8 +14,14 @@ class Service
         try {
             Log::info('ProcessOcrRequest 시작', ['data_keys' => array_keys($data)]);
 
+            // uploaded_file_id 필수 검증
+            if (!isset($data['uploaded_file_id']) || empty($data['uploaded_file_id'])) {
+                throw new \InvalidArgumentException('uploaded_file_id는 필수 파라미터입니다.');
+            }
+
             $originalName = '';
             $filePath = '';
+            $uploadedFileId = $data['uploaded_file_id'];
 
             // 파일 경로와 원본 파일명으로 받은 경우 (기본)
             if (isset($data['file_path']) && isset($data['original_name'])) {
@@ -24,7 +30,8 @@ class Service
                 $filePath = Storage::disk('plobin_uploads')->path($relativePath);
                 Log::info('파일 경로와 원본 파일명으로 처리', [
                     'original_name' => $originalName,
-                    'file_path' => $filePath
+                    'file_path' => $filePath,
+                    'uploaded_file_id' => $uploadedFileId
                 ]);
 
                 if (!file_exists($filePath)) {
@@ -63,7 +70,7 @@ class Service
             $jobId = Str::uuid()->toString();
 
             // 큐에 OCR 처리 작업 등록
-            ProcessOcrJob::dispatch($filePath, $originalName, $jobId);
+            ProcessOcrJob::dispatch($filePath, $originalName, $jobId, $uploadedFileId);
 
             Log::info('OCR 처리 작업이 큐에 등록되었습니다', [
                 'job_id' => $jobId,

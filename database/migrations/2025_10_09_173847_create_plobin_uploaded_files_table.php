@@ -24,11 +24,13 @@ return new class extends Migration
             $table->text('description')->nullable();
             $table->unsignedInteger('download_count')->default(0);
             $table->timestamp('analyzed_at')->nullable();
+            $table->uuid('ocr_request_id')->nullable()->comment('OCR API request ID');
             $table->timestamps();
 
             $table->index(['status', 'created_at']);
             $table->index('uploaded_by');
             $table->index('uuid');
+            $table->index('ocr_request_id');
         });
     }
 

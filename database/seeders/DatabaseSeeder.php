@@ -20,8 +20,9 @@ class DatabaseSeeder extends Seeder
             'email' => 'test@example.com',
         ]);
 
-        // PMS 프로젝트 시더
+        // Plobin 사용자 시더
         $this->call([
+            PlobinUserSeeder::class,
             PlobinPmsKanbanSeeder::class,
             PlobinGanttSeeder::class,
         ]);

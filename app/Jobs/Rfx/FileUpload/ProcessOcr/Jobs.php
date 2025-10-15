@@ -9,6 +9,7 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\DB;
 use romanzipp\QueueMonitor\Traits\IsMonitored;
 
 class Jobs implements ShouldQueue
@@ -18,12 +19,18 @@ class Jobs implements ShouldQueue
     protected string $filePath;
     protected string $originalName;
     protected string $jobId;
+    protected int $uploadedFileId;
 
-    public function __construct(string $filePath, string $originalName, string $jobId)
+    public function __construct(string $filePath, string $originalName, string $jobId, int $uploadedFileId)
     {
+        if (empty($uploadedFileId)) {
+            throw new \InvalidArgumentException('uploadedFileId는 필수 파라미터입니다.');
+        }
+
         $this->filePath = $filePath;
         $this->originalName = $originalName;
         $this->jobId = $jobId;
+        $this->uploadedFileId = $uploadedFileId;
     }
 
     public function handle(): void
@@ -32,8 +39,6 @@ class Jobs implements ShouldQueue
             if (!file_exists($this->filePath)) {
                 throw new \Exception("파일을 찾을 수 없습니다: {$this->filePath}");
             }
-
-            $fileContents = file_get_contents($this->filePath);
 
             // OCR API 통합 엔드포인트 사용
             $extension = strtolower(pathinfo($this->originalName, PATHINFO_EXTENSION));
@@ -44,13 +49,14 @@ class Jobs implements ShouldQueue
                 'job_id' => $this->jobId,
                 'url' => $ocrUrl,
                 'file_name' => $this->originalName,
+                'file_path' => $this->filePath,
                 'extension' => $extension
             ]);
 
             $response = Http::timeout(300)
                 ->attach(
                     'file',
-                    $fileContents,
+                    fopen($this->filePath, 'r'),
                     $this->originalName
                 )
                 ->post($ocrUrl);
@@ -70,6 +76,28 @@ class Jobs implements ShouldQueue
                 'job_id' => $this->jobId,
                 'file_name' => $this->originalName,
                 'ocr_result' => $ocrResult
+            ]);
+
+            // OCR request_id를 DB에 저장
+            if (!isset($ocrResult['request_id'])) {
+                throw new \Exception('OCR API 응답에 request_id가 없습니다.');
+            }
+
+            $updated = DB::table('plobin_uploaded_files')
+                ->where('id', $this->uploadedFileId)
+                ->update([
+                    'ocr_request_id' => $ocrResult['request_id'],
+                    'status' => 'analyzing',
+                    'updated_at' => now()
+                ]);
+
+            if (!$updated) {
+                throw new \Exception("DB 업데이트 실패: uploaded_file_id={$this->uploadedFileId}");
+            }
+
+            Log::info('OCR request_id 저장 완료', [
+                'uploaded_file_id' => $this->uploadedFileId,
+                'ocr_request_id' => $ocrResult['request_id']
             ]);
 
         } catch (\Exception $e) {

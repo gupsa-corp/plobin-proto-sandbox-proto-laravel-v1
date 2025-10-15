@@ -59,28 +59,46 @@ class Livewire extends Component
             // 2단계: OCR 처리 요청
             $filePath = $uploadResult['data']['file_path'] ?? '';
             $originalName = $uploadResult['data']['name'] ?? '';
+            $uploadedFileId = $uploadResult['data']['id'] ?? null;
 
             \Log::info('OCR Request Data', [
                 'file_path' => $filePath,
-                'original_name' => $originalName
+                'original_name' => $originalName,
+                'uploaded_file_id' => $uploadedFileId
             ]);
 
-            if ($filePath && $originalName) {
-                $ocrResult = $ocrService->execute([
+            // 필수 데이터 검증
+            if (empty($filePath) || empty($originalName)) {
+                \Log::error('OCR Request Failed: 필수 데이터 누락', [
                     'file_path' => $filePath,
                     'original_name' => $originalName
                 ]);
+                session()->flash('error', 'OCR 처리 실패: 파일 정보가 올바르지 않습니다.');
+                continue;
+            }
 
-                \Log::info('OCR Result', ['ocr_result' => $ocrResult]);
-
-                if ($ocrResult['success']) {
-                    $this->uploadProgress[$index] = 100;
-                }
-            } else {
-                \Log::warning('OCR Request Skipped', [
-                    'file_path_exists' => !empty($filePath),
-                    'original_name_exists' => !empty($originalName)
+            if (empty($uploadedFileId)) {
+                \Log::error('OCR Request Failed: uploaded_file_id 누락', [
+                    'file_path' => $filePath,
+                    'original_name' => $originalName
                 ]);
+                session()->flash('error', 'OCR 처리 실패: 파일 ID가 올바르지 않습니다.');
+                continue;
+            }
+
+            $ocrResult = $ocrService->execute([
+                'file_path' => $filePath,
+                'original_name' => $originalName,
+                'uploaded_file_id' => $uploadedFileId
+            ]);
+
+            \Log::info('OCR Result', ['ocr_result' => $ocrResult]);
+
+            if ($ocrResult['success']) {
+                $this->uploadProgress[$index] = 100;
+            } else {
+                \Log::error('OCR Request Failed', ['error' => $ocrResult['message']]);
+                session()->flash('error', 'OCR 처리 실패: ' . $ocrResult['message']);
             }
         }
 
