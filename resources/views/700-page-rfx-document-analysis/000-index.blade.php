@@ -573,7 +573,7 @@
                                                     @elseif(isset($block['image_url']))
                                                     <div class="flex-shrink-0">
                                                         <img
-                                                            src="{{ $block['image_url'] }}"
+                                                            src="{{ preg_replace('/\/blocks\/(\d+)\/image$/', '/blocks/' . ($index + 1) . '/image', $block['image_url']) }}"
                                                             alt="Block #{{ $index + 1 }}"
                                                             class="w-24 h-auto object-contain bg-white border border-gray-300 rounded shadow-sm"
                                                             onerror="this.parentElement.innerHTML='<div class=\'w-24 h-24 bg-gray-200 rounded flex items-center justify-center text-xs text-gray-500\'>이미지 없음</div>'"
