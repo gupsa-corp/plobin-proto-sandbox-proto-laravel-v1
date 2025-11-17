@@ -36,11 +36,11 @@ return [
     ],
 
     'ocr' => [
-        'base_url' => env('OCR_API_BASE_URL', 'http://localhost:3100'),
+        'base_url' => env('OCR_API_BASE_URL'),
     ],
 
     'summary' => [
-        'base_url' => env('SUMMARY_API_BASE_URL', 'https://llm.gupsa.net'),
+        'base_url' => env('SUMMARY_API_BASE_URL'),
     ],
 
 ];
