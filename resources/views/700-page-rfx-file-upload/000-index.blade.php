@@ -168,42 +168,6 @@
                         @endforeach
                     </ul>
                 </div>
-
-                <!-- Supported Formats -->
-                <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                    <h3 class="font-medium text-gray-900 mb-4">지원 형식</h3>
-                    <div class="space-y-3">
-                        @foreach($supportedFormats as $category => $formats)
-                        <div>
-                            <div class="font-medium text-gray-900 text-sm">{{ $category }}</div>
-                            <div class="text-xs text-gray-600 mt-1">
-                                {{ implode(', ', array_map(fn($f) => strtoupper($f), $formats)) }}
-                            </div>
-                        </div>
-                        @endforeach
-                    </div>
-                    <div class="mt-4 pt-4 border-t border-gray-200">
-                        <div class="text-sm text-gray-600">
-                            <strong>최대 파일 크기:</strong> {{ $maxFileSize }}
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Quick Actions -->
-                <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                    <h3 class="font-medium text-gray-900 mb-4">빠른 링크</h3>
-                    <div class="space-y-2">
-                        <a href="/rfx/files" class="block text-sm text-blue-600 hover:text-blue-800">
-                            📁 파일 목록 보기
-                        </a>
-                        <a href="/rfx/analysis" class="block text-sm text-blue-600 hover:text-blue-800">
-                            📊 분석 결과 확인
-                        </a>
-                        <a href="/rfx/ai-analysis" class="block text-sm text-blue-600 hover:text-blue-800">
-                            🤖 AI 분석
-                        </a>
-                    </div>
-                </div>
             </div>
         </div>
     </div>

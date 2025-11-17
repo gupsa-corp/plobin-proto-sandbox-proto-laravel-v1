@@ -46,6 +46,7 @@ class Service
             $response = Http::timeout(120)
                 ->withHeaders([
                     'Content-Type' => 'application/json',
+                    'Authorization' => 'Bearer ' . env('OPENAI_API_KEY'),
                 ])
                 ->post("{$summaryApiUrl}/v1/chat/completions", [
                     'model' => $modelId,

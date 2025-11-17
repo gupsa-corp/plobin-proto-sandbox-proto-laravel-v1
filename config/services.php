@@ -40,7 +40,7 @@ return [
     ],
 
     'summary' => [
-        'base_url' => env('SUMMARY_API_BASE_URL', 'http://seoul.gupsa.net:7576'),
+        'base_url' => env('SUMMARY_API_BASE_URL', 'https://llm.gupsa.net'),
     ],
 
 ];
