@@ -1,0 +1,26 @@
+version: '3.8'
+
+services:
+  plobin:
+    image: docker.io/library/30001-plobin-dev1-plobin:latest
+    ports:
+      - "${APP_PORT}:3000"
+    environment:
+      - APP_ENV=local
+      - APP_DEBUG=true
+      - APP_PORT=${APP_PORT}
+      - APP_URL=http://localhost:${APP_PORT}
+      - APP_FORCE_HTTPS=false
+      - SERVICE_ADMIN_ID=admin
+      - SERVICE_ADMIN_PASSWORD=password
+    volumes:
+      - ./storage:/var/www/html/storage
+      - ./database:/var/www/html/database
+      - ./.env:/var/www/html/.env
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:${APP_PORT}/api/healthz"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s

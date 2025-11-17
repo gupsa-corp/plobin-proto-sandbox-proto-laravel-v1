@@ -5,6 +5,7 @@ namespace App\Services\Rfx\Upload;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\DB;
 use App\Jobs\Rfx\Upload\ProcessUpload\Jobs as ProcessUploadJob;
 
 class Service
@@ -38,14 +39,30 @@ class Service
         // 업로드 ID 생성
         $uploadId = Str::uuid()->toString();
 
+        // 데이터베이스에 업로드 정보 저장
+        DB::table('rfx_uploads')->insert([
+            'upload_id' => $uploadId,
+            'original_filename' => $file->getClientOriginalName(),
+            'stored_filename' => $filename,
+            'file_path' => $filePath,
+            'file_size' => $file->getSize(),
+            'file_type' => $file->getClientMimeType(),
+            'status' => 'pending',
+            'created_at' => now(),
+            'updated_at' => now()
+        ]);
+
         // 큐에 OCR 처리 작업 등록
         ProcessUploadJob::dispatch($filePath, $filename, $uploadId);
 
         return [
             'upload_id' => $uploadId,
-            'filename' => $filename,
+            'filename' => $file->getClientOriginalName(),
+            'stored_filename' => $filename,
             'file_path' => $filePath,
-            'status' => 'queued'
+            'file_size' => $file->getSize(),
+            'file_type' => $file->getClientMimeType(),
+            'status' => 'pending'
         ];
     }
 

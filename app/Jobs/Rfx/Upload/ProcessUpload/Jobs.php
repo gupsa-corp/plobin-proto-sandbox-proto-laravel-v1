@@ -31,6 +31,14 @@ class Jobs implements ShouldQueue
     public function handle(): void
     {
         try {
+            // 상태를 processing으로 변경
+            DB::table('rfx_uploads')
+                ->where('upload_id', $this->uploadId)
+                ->update([
+                    'status' => 'processing',
+                    'updated_at' => now()
+                ]);
+
             $ocrServiceUrl = config('services.ocr.base_url');
             $fullPath = Storage::disk('local')->path($this->filePath);
 
@@ -53,14 +61,38 @@ class Jobs implements ShouldQueue
 
             $ocrResult = $response->json();
 
-            // 결과 저장 (임시 - 추후 uploads 테이블 생성 필요)
+            // OCR 결과를 데이터베이스에 저장
+            DB::table('rfx_ocr_results')->insert([
+                'upload_id' => $this->uploadId,
+                'ocr_result' => json_encode($ocrResult),
+                'created_at' => now(),
+                'updated_at' => now()
+            ]);
+
+            // 상태를 completed로 변경
+            DB::table('rfx_uploads')
+                ->where('upload_id', $this->uploadId)
+                ->update([
+                    'status' => 'completed',
+                    'updated_at' => now()
+                ]);
+
             Log::info("파일 업로드 및 OCR 처리 완료", [
                 'upload_id' => $this->uploadId,
                 'filename' => $this->filename,
-                'ocr_result' => $ocrResult
+                'status' => 'completed'
             ]);
 
         } catch (\Exception $e) {
+            // 상태를 failed로 변경
+            DB::table('rfx_uploads')
+                ->where('upload_id', $this->uploadId)
+                ->update([
+                    'status' => 'failed',
+                    'error_message' => $e->getMessage(),
+                    'updated_at' => now()
+                ]);
+
             Log::error("파일 업로드 처리 실패", [
                 'upload_id' => $this->uploadId,
                 'filename' => $this->filename,
