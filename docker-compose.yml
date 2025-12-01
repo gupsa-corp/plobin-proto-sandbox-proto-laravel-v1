@@ -1,10 +1,8 @@
-version: '3.8'
-
 services:
   plobin:
-    image: docker.io/library/30001-plobin-dev1-plobin:latest
+    image: plobin-proto-10001:latest
     ports:
-      - "${APP_PORT}:3000"
+      - "${APP_PORT}:${APP_PORT}"
     environment:
       - APP_ENV=local
       - APP_DEBUG=true
@@ -18,6 +16,7 @@ services:
       - ./database:/var/www/html/database
       - ./.env:/var/www/html/.env
     restart: unless-stopped
+    stop_grace_period: 120s
     healthcheck:
       test: ["CMD", "curl", "-fsS", "http://localhost:${APP_PORT}/api/healthz"]
       interval: 30s

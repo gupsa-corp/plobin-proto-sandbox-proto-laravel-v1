@@ -18,6 +18,9 @@ return Application::configure(basePath: dirname(__DIR__))
         },
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        // 모든 프록시 신뢰 (리버스 프록시 환경에서 HTTPS 헤더 전달)
+        $middleware->trustProxies(at: '*');
+
         $middleware->api(remove: [
             \Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class,
         ]);

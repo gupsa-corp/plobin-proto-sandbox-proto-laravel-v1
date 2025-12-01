@@ -30,8 +30,11 @@ ENV APP_FORCE_HTTPS=false \
     LOG_LEVEL=error \
     SESSION_DRIVER=file \
     CACHE_DRIVER=file \
-    QUEUE_CONNECTION=sync \
-    APP_PORT=35002
+    QUEUE_CONNECTION=database \
+    APP_PORT=10001
+
+# Graceful shutdown signal handling
+STOPSIGNAL SIGTERM
 
 # Copy and install dependencies
 COPY composer.json composer.lock ./
@@ -69,14 +72,6 @@ RUN cat > /usr/local/bin/start.sh << 'STARTEOF' \
 && echo 'echo "Starting Laravel initialization..."' >> /usr/local/bin/start.sh \
 && echo 'cd /var/www/html' >> /usr/local/bin/start.sh \
 && echo '' >> /usr/local/bin/start.sh \
-&& echo '# Clear and cache config' >> /usr/local/bin/start.sh \
-&& echo 'php artisan config:clear' >> /usr/local/bin/start.sh \
-&& echo 'php artisan cache:clear' >> /usr/local/bin/start.sh \
-&& echo 'php artisan route:clear' >> /usr/local/bin/start.sh \
-&& echo 'php artisan view:clear' >> /usr/local/bin/start.sh \
-&& echo 'php artisan config:cache' >> /usr/local/bin/start.sh \
-&& echo 'php artisan view:cache' >> /usr/local/bin/start.sh \
-&& echo '' >> /usr/local/bin/start.sh \
 && echo '# Set permissions for sandbox SQLite files' >> /usr/local/bin/start.sh \
 && echo 'echo "Setting permissions for sandbox SQLite files..."' >> /usr/local/bin/start.sh \
 && echo 'if [ -d "sandbox/container" ]; then' >> /usr/local/bin/start.sh \
@@ -85,12 +80,20 @@ RUN cat > /usr/local/bin/start.sh << 'STARTEOF' \
 && echo '    find sandbox/container -type f -name "*.sqlite*" -exec chown www-data:www-data {} \\; 2>/dev/null || true' >> /usr/local/bin/start.sh \
 && echo 'fi' >> /usr/local/bin/start.sh \
 && echo '' >> /usr/local/bin/start.sh \
-&& echo '# Run migrations' >> /usr/local/bin/start.sh \
+&& echo '# Run migrations first' >> /usr/local/bin/start.sh \
 && echo 'echo "Running database migrations on connection (sqlite)..."' >> /usr/local/bin/start.sh \
 && echo 'php artisan migrate --force || echo "Migration failed or no migrations to run"' >> /usr/local/bin/start.sh \
 && echo '' >> /usr/local/bin/start.sh \
+&& echo '# Clear and cache config after migration' >> /usr/local/bin/start.sh \
+&& echo 'php artisan config:clear' >> /usr/local/bin/start.sh \
+&& echo 'php artisan cache:clear || true' >> /usr/local/bin/start.sh \
+&& echo 'php artisan route:clear' >> /usr/local/bin/start.sh \
+&& echo 'php artisan view:clear' >> /usr/local/bin/start.sh \
+&& echo 'php artisan config:cache' >> /usr/local/bin/start.sh \
+&& echo 'php artisan view:cache' >> /usr/local/bin/start.sh \
+&& echo '' >> /usr/local/bin/start.sh \
 && echo '# Generate supervisor config with environment variables' >> /usr/local/bin/start.sh \
-&& echo 'echo "Generating Supervisor configuration with APP_PORT="${APP_PORT:-35002}"..."' >> /usr/local/bin/start.sh \
+&& echo 'echo "Generating Supervisor configuration with APP_PORT="${APP_PORT:-10001}"..."' >> /usr/local/bin/start.sh \
 && echo 'cat > /etc/supervisor/conf.d/supervisord.conf << SUPERVISOR_EOF' >> /usr/local/bin/start.sh \
 && echo '[supervisord]' >> /usr/local/bin/start.sh \
 && echo 'nodaemon=true' >> /usr/local/bin/start.sh \
@@ -99,7 +102,7 @@ RUN cat > /usr/local/bin/start.sh << 'STARTEOF' \
 && echo 'pidfile=/var/run/supervisord.pid' >> /usr/local/bin/start.sh \
 && echo '' >> /usr/local/bin/start.sh \
 && echo '[program:php-server]' >> /usr/local/bin/start.sh \
-&& echo 'command=php artisan serve --host=0.0.0.0 --port=${APP_PORT:-35002}' >> /usr/local/bin/start.sh \
+&& echo 'command=php artisan serve --host=0.0.0.0 --port=${APP_PORT:-10001}' >> /usr/local/bin/start.sh \
 && echo 'directory=/var/www/html' >> /usr/local/bin/start.sh \
 && echo 'autostart=true' >> /usr/local/bin/start.sh \
 && echo 'autorestart=true' >> /usr/local/bin/start.sh \
@@ -121,12 +124,15 @@ RUN cat > /usr/local/bin/start.sh << 'STARTEOF' \
 && echo 'stderr_logfile_maxbytes=0' >> /usr/local/bin/start.sh \
 && echo '' >> /usr/local/bin/start.sh \
 && echo '[program:laravel-queue]' >> /usr/local/bin/start.sh \
-&& echo 'command=php artisan queue:work --sleep=3 --tries=3 --timeout=90 --max-jobs=1000' >> /usr/local/bin/start.sh \
+&& echo 'command=php artisan queue:work --sleep=3 --tries=3 --timeout=90 --max-jobs=1000 --max-time=3600' >> /usr/local/bin/start.sh \
 && echo 'directory=/var/www/html' >> /usr/local/bin/start.sh \
 && echo 'autostart=true' >> /usr/local/bin/start.sh \
 && echo 'autorestart=true' >> /usr/local/bin/start.sh \
 && echo 'user=www-data' >> /usr/local/bin/start.sh \
-&& echo 'numprocs=1' >> /usr/local/bin/start.sh \
+&& echo 'numprocs=2' >> /usr/local/bin/start.sh \
+&& echo 'process_name=%(program_name)s_%(process_num)02d' >> /usr/local/bin/start.sh \
+&& echo 'stopwaitsecs=120' >> /usr/local/bin/start.sh \
+&& echo 'stopsignal=SIGTERM' >> /usr/local/bin/start.sh \
 && echo 'stdout_logfile=/dev/stdout' >> /usr/local/bin/start.sh \
 && echo 'stdout_logfile_maxbytes=0' >> /usr/local/bin/start.sh \
 && echo 'stderr_logfile=/dev/stderr' >> /usr/local/bin/start.sh \
@@ -136,7 +142,7 @@ RUN cat > /usr/local/bin/start.sh << 'STARTEOF' \
 && echo 'echo "Laravel initialization completed."' >> /usr/local/bin/start.sh \
 && echo '' >> /usr/local/bin/start.sh \
 && echo '# Start Supervisor' >> /usr/local/bin/start.sh \
-&& echo 'echo "Starting Supervisor with PHP server (port "${APP_PORT:-35002}"), scheduler, and queue worker..."' >> /usr/local/bin/start.sh \
+&& echo 'echo "Starting Supervisor with PHP server (port "${APP_PORT:-10001}"), scheduler, and queue worker..."' >> /usr/local/bin/start.sh \
 && echo 'exec supervisord -c /etc/supervisor/conf.d/supervisord.conf' >> /usr/local/bin/start.sh
 STARTEOF
 
