@@ -13,9 +13,9 @@ pkill -f "php artisan queue:work"
 # 로그 디렉토리 생성
 mkdir -p storage/logs/dev
 
-echo "🌐 Laravel 개발 서버 시작 중... (포트 35002)"
+echo "🌐 Laravel 개발 서버 시작 중... (포트 10001)"
 # Laravel 서버를 백그라운드에서 실행
-nohup php artisan serve --host=127.0.0.1 --port=35002 > storage/logs/dev/server.log 2>&1 &
+nohup php artisan serve --host=127.0.0.1 --port=10001 > storage/logs/dev/server.log 2>&1 &
 SERVER_PID=$!
 
 echo "⚡ 큐 워커 시작 중..."
@@ -25,8 +25,8 @@ QUEUE_PID=$!
 
 echo ""
 echo "✅ 서버가 성공적으로 시작되었습니다!"
-echo "📍 서버 주소: http://127.0.0.1:35002"
-echo "📊 RFX 시스템: http://127.0.0.1:35002/rfx/dashboard"
+echo "📍 서버 주소: http://127.0.0.1:10001"
+echo "📊 RFX 시스템: http://127.0.0.1:10001/rfx/dashboard"
 echo ""
 echo "📋 프로세스 정보:"
 echo "   - Laravel 서버 PID: $SERVER_PID"
